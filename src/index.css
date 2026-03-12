@@ -1,0 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Nunito:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 148 47% 96%;
+    --foreground: 153 25% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 153 25% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 153 25% 11%;
+    --primary: 147 64% 29%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 168 72% 30%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 148 25% 93%;
+    --muted-foreground: 150 10% 43%;
+    --accent: 28 80% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 4 70% 57%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 140 50% 40%;
+    --success-foreground: 0 0% 100%;
+    --info: 207 58% 44%;
+    --info-foreground: 0 0% 100%;
+    --warning: 45 88% 50%;
+    --warning-foreground: 25 80% 12%;
+    --border: 148 15% 88%;
+    --input: 148 15% 88%;
+    --ring: 147 64% 29%;
+    --radius: 0.75rem;
+
+    --sidebar-background: 147 64% 22%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 147 64% 29%;
+    --sidebar-accent: 28 80% 52%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 147 50% 18%;
+    --sidebar-ring: 0 0% 100%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'DM Sans', sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .font-body {
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .text-score {
+    font-family: 'JetBrains Mono', monospace;
+    @apply font-bold;
+  }
+
+  @keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .animate-pulse-live {
+    animation: pulse-live 1.5s ease-in-out infinite;
+  }
+
+  @keyframes flash-highlight {
+    0% { background-color: hsl(45 88% 50% / 0.3); }
+    100% { background-color: transparent; }
+  }
+
+  .animate-flash {
+    animation: flash-highlight 1.5s ease-out;
+  }
+}
