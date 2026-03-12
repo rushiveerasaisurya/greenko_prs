@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Plus, X, MessageSquare, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { tickets as initialTickets } from '@/mockData/tickets';
 import { useAuth } from '@/contexts/AuthContext';
-import { sites } from '@/mockData/sites';
+import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
 
 const typeConfig = {
@@ -16,6 +16,7 @@ const priorityConfig = { Low: 'bg-muted text-muted-foreground', Medium: 'bg-info
 
 export default function Tickets() {
   const { user } = useAuth();
+  const { sites } = useData();
   const [ticketList, setTicketList] = useState(initialTickets);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');

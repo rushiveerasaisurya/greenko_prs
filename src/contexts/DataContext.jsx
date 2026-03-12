@@ -289,10 +289,14 @@ export function DataProvider({ children }) {
             const statuses = ['Excellent', 'Good', 'Needs Improvement'];
             const statusIndex = score > 75 ? 0 : score > 60 ? 1 : 2;
 
+            // Get names of all sites in this cluster
+            const clusterSitesNames = sites.filter(s => s.cluster === c.cluster && s.status === 'Active').map(s => s.name);
+
             return {
-                id: c.cluster, // use cluster name as id
+                id: c.cluster,
                 cluster: c.cluster,
                 score,
+                siteNames: clusterSitesNames,
                 totalPositive: Math.round(c.totalPositive / c.count),
                 totalNegative: Math.round(c.totalNegative / c.count),
                 change: Math.round(c.totalChange / c.count),

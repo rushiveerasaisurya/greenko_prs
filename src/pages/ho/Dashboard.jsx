@@ -8,9 +8,10 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { useData } from '@/contexts/DataContext';
 
 export default function HODashboard() {
-  const { sites, clusters, months, getLeaderboard } = useData();
-
-  const currentLeaderboard = getLeaderboard(months[months.length - 1]);
+  const { sites, clusters, months, getLeaderboard, getClusterLeaderboard } = useData();
+  const currentMonth = months[months.length - 1];
+  const currentLeaderboard = getLeaderboard(currentMonth);
+  const clusterLeaderboard = getClusterLeaderboard(currentMonth);
 
   const kpis = [
     { label: 'Total Active Sites', value: sites.filter(s => s.status === 'Active').length, icon: Factory, color: 'bg-primary' },
@@ -19,7 +20,10 @@ export default function HODashboard() {
     { label: 'Open Tickets', value: tickets.filter(t => t.status !== 'CLOSED').length, icon: Ticket, color: 'bg-accent' },
   ];
 
-  const clusterChart = clusters.map(c => ({ name: c.name.replace(' Cluster', ''), score: c.avgScore }));
+  const clusterChart = clusterLeaderboard.map(c => ({
+    name: c.cluster.replace(' Cluster', ''),
+    score: c.score
+  }));
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">

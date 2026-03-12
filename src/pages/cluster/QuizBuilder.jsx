@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, Eye, GripVertical, X, FileQuestion, ClipboardList } from 'lucide-react';
 import { quizzes as initialQuizzes } from '@/mockData/quizzes';
 import { scoringElements } from '@/mockData/scoringElements';
-import { sites } from '@/mockData/sites';
+import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -14,6 +14,7 @@ const emptyQuiz = {
 
 export default function QuizBuilder() {
   const { user } = useAuth();
+  const { sites } = useData();
   const [quizList, setQuizList] = useState(initialQuizzes);
   const [editing, setEditing] = useState(null);
   const [step, setStep] = useState(1);

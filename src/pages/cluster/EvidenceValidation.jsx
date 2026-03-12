@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { FileText, Check, XIcon, Eye, X } from 'lucide-react';
 import { evidenceSubmissions } from '@/mockData/evidenceSubmissions';
 import { scoringElements } from '@/mockData/scoringElements';
-import { sites } from '@/mockData/sites';
+import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
 
 export default function EvidenceValidation() {
+  const { sites } = useData();
   const [submissions, setSubmissions] = useState(evidenceSubmissions);
   const [filterSite, setFilterSite] = useState('');
   const [filterElement, setFilterElement] = useState('');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Download, X } from 'lucide-react';
-import { sites } from '@/mockData/sites';
+import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
@@ -12,6 +12,7 @@ const initialReports = [
 
 export default function AuditReports() {
   const { user } = useAuth();
+  const { sites } = useData();
   const [reports, setReports] = useState(initialReports);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [form, setForm] = useState({ site: '', date: '', type: '', findings: '', corrective: '', nextDate: '' });
@@ -55,12 +56,12 @@ export default function AuditReports() {
         <motion.div initial={{ x: '100%' }} animate={{ x: 0 }} className="fixed right-0 top-0 h-full w-full max-w-md bg-card z-50 shadow-xl border-l border-border overflow-y-auto">
           <div className="flex items-center justify-between p-5 border-b border-border"><h3 className="font-display font-bold text-lg">Create Audit Report</h3><button onClick={() => setDrawerOpen(false)}><X className="w-5 h-5" /></button></div>
           <div className="p-5 space-y-4">
-            <div><label className="text-xs font-semibold text-muted-foreground">Site *</label><select value={form.site} onChange={e => setForm({...form, site: e.target.value})} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select</option>{clusterSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
-            <div><label className="text-xs font-semibold text-muted-foreground">Audit Date</label><input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
-            <div><label className="text-xs font-semibold text-muted-foreground">Audit Type</label><input value={form.type} onChange={e => setForm({...form, type: e.target.value})} placeholder="e.g. Safety Walkthrough" className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
-            <div><label className="text-xs font-semibold text-muted-foreground">Findings *</label><textarea value={form.findings} onChange={e => setForm({...form, findings: e.target.value})} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" rows={4} /></div>
-            <div><label className="text-xs font-semibold text-muted-foreground">Corrective Actions</label><textarea value={form.corrective} onChange={e => setForm({...form, corrective: e.target.value})} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" rows={3} /></div>
-            <div><label className="text-xs font-semibold text-muted-foreground">Next Audit Date</label><input type="date" value={form.nextDate} onChange={e => setForm({...form, nextDate: e.target.value})} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Site *</label><select value={form.site} onChange={e => setForm({ ...form, site: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select</option>{clusterSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Audit Date</label><input type="date" value={form.date} onChange={e => setForm({ ...form, date: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Audit Type</label><input value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} placeholder="e.g. Safety Walkthrough" className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Findings *</label><textarea value={form.findings} onChange={e => setForm({ ...form, findings: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" rows={4} /></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Corrective Actions</label><textarea value={form.corrective} onChange={e => setForm({ ...form, corrective: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" rows={3} /></div>
+            <div><label className="text-xs font-semibold text-muted-foreground">Next Audit Date</label><input type="date" value={form.nextDate} onChange={e => setForm({ ...form, nextDate: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
             <div className="flex gap-3 pt-4">
               <button onClick={handleSave} className="flex-1 py-2.5 bg-success text-success-foreground rounded-lg font-semibold text-sm">Submit Report</button>
               <button onClick={() => setDrawerOpen(false)} className="flex-1 py-2.5 border border-border rounded-lg font-semibold text-sm">Cancel</button>

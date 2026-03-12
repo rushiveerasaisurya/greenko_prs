@@ -139,6 +139,7 @@ export default function Leaderboard() {
             <th className="px-4 py-3 text-left">Rank</th>
             <th className="px-4 py-3 text-left">{tab === 'cluster' ? 'Cluster' : 'Site'}</th>
             {tab !== 'cluster' && <th className="px-4 py-3 text-left">Cluster</th>}
+            {tab === 'cluster' && <th className="px-4 py-3 text-left">Sites</th>}
             <th className="px-4 py-3 text-right">Score</th>
             <th className="px-4 py-3 text-center">Change</th>
             <th className="px-4 py-3 text-center">Status</th>
@@ -148,6 +149,15 @@ export default function Leaderboard() {
               <td className="px-4 py-3 font-bold">{e.rank <= 3 ? ['🥇', '🥈', '🥉'][e.rank - 1] : e.rank}</td>
               <td className="px-4 py-3 font-medium">{tab === 'cluster' ? e.cluster : e.site}</td>
               {tab !== 'cluster' && <td className="px-4 py-3 text-muted-foreground">{e.cluster}</td>}
+              {tab === 'cluster' && (
+                <td className="px-4 py-3">
+                  <div className="flex flex-wrap gap-1">
+                    {e.siteNames?.map(name => (
+                      <span key={name} className="bg-muted px-1.5 py-0.5 rounded text-[10px]">{name}</span>
+                    ))}
+                  </div>
+                </td>
+              )}
               <td className={`px-4 py-3 text-right text-score font-bold ${scoreColor(e.score)}`}>{e.score}</td>
               <td className="px-4 py-3 text-center">{e.change > 0 ? <span className="text-success font-semibold">↑{e.change}</span> : e.change < 0 ? <span className="text-destructive font-semibold">↓{Math.abs(e.change)}</span> : '—'}</td>
               <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap font-bold ${e.status === 'Fully Submitted' || e.status === 'Excellent' ? 'bg-success/15 text-success' : e.status === 'Partial' || e.status === 'Good' ? 'bg-warning/15 text-warning-foreground' : 'bg-muted text-muted-foreground'}`}>{e.status}</span></td>
