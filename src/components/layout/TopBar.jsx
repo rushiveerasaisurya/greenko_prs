@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Bell, Menu } from 'lucide-react';
-import { notifications as mockNotifications } from '@/mockData/notifications';
+import { useData } from '@/contexts/DataContext';
 
 const pathLabels = {
   '/dashboard/ho': 'Dashboard',
@@ -27,9 +27,10 @@ const pathLabels = {
 
 export default function TopBar({ onMenuClick }) {
   const { user } = useAuth();
+  const { notifications: mockNotifications } = useData();
   const location = useLocation();
   const [showNotifs, setShowNotifs] = useState(false);
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  const unreadCount = mockNotifications ? mockNotifications.filter(n => !n.read).length : 0;
   const currentPage = pathLabels[location.pathname] || 'Page';
   const roleLabel = user?.role === 'HEAD_OFFICE' ? 'HO' : user?.role === 'CLUSTER_HEAD' ? 'Cluster' : 'Site';
 

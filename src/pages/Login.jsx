@@ -24,12 +24,16 @@ export default function Login() {
     const err = login(email, password);
     setLoading(false);
     if (err) { setError(err); return; }
-    const routes= {
-      'ho@greenko.com': '/dashboard/ho',
-      'cluster@greenko.com': '/dashboard/cluster',
-      'site@greenko.com': '/dashboard/site',
+    // As a fallback to ensure we grab the correct newly fetched user:
+    const fetchedUser = JSON.parse(sessionStorage.getItem('ssrs_user')) || {};
+    const userRole = fetchedUser.role;
+
+    const routes = {
+      HEAD_OFFICE: '/dashboard/ho',
+      CLUSTER_HEAD: '/dashboard/cluster',
+      SITE_HEAD: '/dashboard/site',
     };
-    navigate(routes[email] || '/dashboard/ho');
+    navigate(routes[userRole] || '/dashboard/site');
   };
 
   const quickLogin = (e, p) => { setEmail(e); setPassword(p); };
@@ -99,9 +103,9 @@ export default function Login() {
             <p className="text-xs text-muted-foreground font-semibold mb-3 uppercase tracking-wide">Demo Accounts</p>
             <div className="space-y-2">
               {[
-                { label: 'Head Office / Admin', email: 'ho@greenko.com', pw: 'admin123', color: 'bg-primary' },
-                { label: 'Cluster Head / Safety Officer', email: 'cluster@greenko.com', pw: 'cluster123', color: 'bg-secondary' },
-                { label: 'Site Head', email: 'site@greenko.com', pw: 'site123', color: 'bg-accent' },
+                { label: 'Head Office / Admin', email: 'ho@greenko.com', pw: 'password', color: 'bg-primary' },
+                { label: 'Cluster Head / Safety Officer', email: 'cluster@greenko.com', pw: 'password', color: 'bg-secondary' },
+                { label: 'Site Head', email: 'site@greenko.com', pw: 'password', color: 'bg-accent' },
               ].map(r => (
                 <button key={r.email} type="button" onClick={() => quickLogin(r.email, r.pw)}
                   className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/50 transition-all text-left">

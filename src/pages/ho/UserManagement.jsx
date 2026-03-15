@@ -23,7 +23,7 @@ export default function UserManagement() {
       updateUser(editingId, { name: form.name, email: form.email, role: form.role, cluster: form.cluster || null, site: form.site || null, status: form.status });
       toast({ title: 'User updated ✓' });
     } else {
-      addUser({ name: form.name, email: form.email, role: form.role, cluster: form.cluster || null, site: form.site || null, status: form.status });
+      addUser({ name: form.name, email: form.email, password: form.password || 'password', role: form.role, cluster: form.cluster || null, site: form.site || null, status: form.status });
       toast({ title: 'User created ✓' });
     }
     setDrawerOpen(false);

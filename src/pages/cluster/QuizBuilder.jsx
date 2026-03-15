@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, Eye, GripVertical, X, FileQuestion, ClipboardList } from 'lucide-react';
-import { quizzes as initialQuizzes } from '@/mockData/quizzes';
-import { scoringElements } from '@/mockData/scoringElements';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
@@ -14,8 +12,7 @@ const emptyQuiz = {
 
 export default function QuizBuilder() {
   const { user } = useAuth();
-  const { sites } = useData();
-  const [quizList, setQuizList] = useState(initialQuizzes);
+  const { sites, quizzes: quizList, addQuiz, updateQuiz } = useData();
   const [editing, setEditing] = useState(null);
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);
@@ -80,7 +77,11 @@ export default function QuizBuilder() {
     if (!editing) return;
     const updated = { ...editing, status: publish ? 'Published' : 'Draft' };
     const exists = quizList.find(q => q.id === updated.id);
-    setQuizList(exists ? quizList.map(q => q.id === updated.id ? updated : q) : [...quizList, updated]);
+    if (exists) {
+      updateQuiz(updated.id, updated);
+    } else {
+      addQuiz(updated);
+    }
     setEditing(null);
     toast({ title: publish ? 'Quiz published ✓' : 'Quiz saved as draft ✓' });
   };

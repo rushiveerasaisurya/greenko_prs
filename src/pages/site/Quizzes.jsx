@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { quizzes } from '@/mockData/quizzes';
+import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Clock, Award, ChevronLeft, ChevronRight, CheckCircle2, Upload } from 'lucide-react';
 
 export default function SiteQuizzes() {
   const { user } = useAuth();
+  const { quizzes } = useData();
   const [tab, setTab] = useState('pending');
   const [activeQuiz, setActiveQuiz] = useState(null);
   const [currentQ, setCurrentQ] = useState(0);

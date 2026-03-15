@@ -1,22 +1,23 @@
 import { motion } from 'framer-motion';
 import { Factory, FolderTree, BarChart3, Ticket } from 'lucide-react';
-
-import { tickets } from '@/mockData/tickets';
-import { notifications } from '@/mockData/notifications';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { useData } from '@/contexts/DataContext';
 
 export default function HODashboard() {
-  const { sites, clusters, months, getLeaderboard, getClusterLeaderboard } = useData();
+  const { sites, clusters, months, getLeaderboard, getClusterLeaderboard, tickets, notifications } = useData();
   const currentMonth = months[months.length - 1];
   const currentLeaderboard = getLeaderboard(currentMonth);
   const clusterLeaderboard = getClusterLeaderboard(currentMonth);
 
+  const avgScore = currentLeaderboard.length > 0
+    ? (currentLeaderboard.reduce((acc, s) => acc + s.score, 0) / currentLeaderboard.length).toFixed(1)
+    : '0.0';
+
   const kpis = [
     { label: 'Total Active Sites', value: sites.filter(s => s.status === 'Active').length, icon: Factory, color: 'bg-primary' },
     { label: 'Total Clusters', value: clusters.length, icon: FolderTree, color: 'bg-secondary' },
-    { label: 'Company Avg Score', value: '78.4', icon: BarChart3, color: 'bg-info' },
+    { label: 'Company Avg Score', value: avgScore, icon: BarChart3, color: 'bg-info' },
     { label: 'Open Tickets', value: tickets.filter(t => t.status !== 'CLOSED').length, icon: Ticket, color: 'bg-accent' },
   ];
 

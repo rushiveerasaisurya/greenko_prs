@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, X, MessageSquare, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { tickets as initialTickets } from '@/mockData/tickets';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
@@ -16,8 +15,7 @@ const priorityConfig = { Low: 'bg-muted text-muted-foreground', Medium: 'bg-info
 
 export default function Tickets() {
   const { user } = useAuth();
-  const { sites } = useData();
-  const [ticketList, setTicketList] = useState(initialTickets);
+  const { sites, tickets: ticketList, addTicket, updateTicket } = useData();
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -49,7 +47,7 @@ export default function Tickets() {
       date: form.date || new Date().toISOString().slice(0, 16).replace('T', ' '), status: 'OPEN', priority: form.priority,
       immediateAction: form.immediateAction, assignedTo: '', correctiveActions: [], comments: [],
     };
-    setTicketList([...ticketList, newTicket]);
+    addTicket(newTicket);
     setDrawerOpen(false);
     setRegStep(1);
     setForm({ type: '', title: '', description: '', location: '', date: '', priority: 'Medium', people: '', immediateAction: '' });
@@ -58,26 +56,26 @@ export default function Tickets() {
 
   const addComment = () => {
     if (!comment.trim() || !detailId) return;
-    setTicketList(ticketList.map(t => t.id === detailId ? { ...t, comments: [...t.comments, { id: String(Date.now()), by: user?.name || '', text: comment, timestamp: new Date().toISOString().slice(0, 16).replace('T', ' ') }] } : t));
+    updateTicket(detailId, { comments: [...detail.comments, { id: String(Date.now()), by: user?.name || '', text: comment, timestamp: new Date().toISOString().slice(0, 16).replace('T', ' ') }] });
     setComment('');
   };
 
   const addCA = () => {
     if (!caForm.action || !detailId) return;
     const ca = { id: String(Date.now()), ...caForm, done: false };
-    setTicketList(ticketList.map(t => t.id === detailId ? { ...t, correctiveActions: [...t.correctiveActions, ca], status: 'IN_PROGRESS' } : t));
+    updateTicket(detailId, { correctiveActions: [...detail.correctiveActions, ca], status: 'IN_PROGRESS' });
     setCaForm({ action: '', assignedTo: '', dueDate: '' });
     toast({ title: 'Corrective action added ✓' });
   };
 
   const toggleCA = (caId) => {
     if (!detailId) return;
-    setTicketList(ticketList.map(t => t.id === detailId ? { ...t, correctiveActions: t.correctiveActions.map(ca => ca.id === caId ? { ...ca, done: !ca.done } : ca) } : t));
+    updateTicket(detailId, { correctiveActions: detail.correctiveActions.map(ca => ca.id === caId ? { ...ca, done: !ca.done } : ca) });
   };
 
   const closeTicket = () => {
     if (!detailId) return;
-    setTicketList(ticketList.map(t => t.id === detailId ? { ...t, status: 'CLOSED', closedDate: new Date().toISOString().slice(0, 16).replace('T', ' '), closedBy: user?.name || '' } : t));
+    updateTicket(detailId, { status: 'CLOSED', closedDate: new Date().toISOString().slice(0, 16).replace('T', ' '), closedBy: user?.name || '' });
     setClosureNotes('');
     toast({ title: 'Ticket closed ✓' });
   };

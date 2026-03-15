@@ -16,13 +16,13 @@ import SiteManagement from "./pages/ho/SiteManagement";
 import ClusterManagement from "./pages/ho/ClusterManagement";
 import UserManagement from "./pages/ho/UserManagement";
 import ScoringConfig from "./pages/ho/ScoringConfig";
-import QuarterManagement from "./pages/ho/QuarterManagement";
 
 // Cluster pages
 import ClusterDashboard from "./pages/cluster/Dashboard";
 import EvidenceValidation from "./pages/cluster/EvidenceValidation";
 import QuizBuilder from "./pages/cluster/QuizBuilder";
 import AuditReports from "./pages/cluster/AuditReports";
+import IncidentReporting from "./pages/cluster/IncidentReporting";
 
 // Site pages
 import SiteDashboard from "./pages/site/Dashboard";
@@ -48,47 +48,63 @@ function RoleRedirect() {
   return <Navigate to={routes[user.role]} replace />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
+const App = () => {
+  // One-time cache clear for authentications fixes
+  const CACHE_VERSION = 'v1.3';
+  if (localStorage.getItem('ssrs_cache_version') !== CACHE_VERSION) {
+    localStorage.removeItem('sp_users');
+    localStorage.removeItem('sp_sites');
+    localStorage.removeItem('sp_clusters');
+    localStorage.removeItem('sp_submissions');
+    localStorage.removeItem('sp_tickets');
+    localStorage.removeItem('sp_notifications');
+    sessionStorage.removeItem('ssrs_user');
+    localStorage.setItem('ssrs_cache_version', CACHE_VERSION);
+    window.location.reload();
+  }
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
         <DataProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={<RoleRedirect />} />
-              <Route element={<PrivateRoute><AppShell /></PrivateRoute>}>
-                {/* HO */}
-                <Route path="/dashboard/ho" element={<HODashboard />} />
-                <Route path="/dashboard/ho/sites" element={<SiteManagement />} />
-                <Route path="/dashboard/ho/clusters" element={<ClusterManagement />} />
-                <Route path="/dashboard/ho/users" element={<UserManagement />} />
-                <Route path="/dashboard/ho/scoring" element={<ScoringConfig />} />
-                <Route path="/dashboard/ho/quarters" element={<QuarterManagement />} />
-                {/* Cluster */}
-                <Route path="/dashboard/cluster" element={<ClusterDashboard />} />
-                <Route path="/dashboard/cluster/validation" element={<EvidenceValidation />} />
-                <Route path="/dashboard/cluster/quizzes" element={<QuizBuilder />} />
-                <Route path="/dashboard/cluster/audits" element={<AuditReports />} />
-                {/* Site */}
-                <Route path="/dashboard/site" element={<SiteDashboard />} />
-                <Route path="/dashboard/site/evidence" element={<SubmitEvidence />} />
-                <Route path="/dashboard/site/quizzes" element={<SiteQuizzes />} />
-                <Route path="/dashboard/site/performance" element={<SitePerformance />} />
-                {/* Shared */}
-                <Route path="/leaderboard" element={<Leaderboard />} />
-                <Route path="/tickets" element={<Tickets />} />
-                <Route path="/notifications" element={<Notifications />} />
-              </Route>
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AuthProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<RoleRedirect />} />
+                <Route element={<PrivateRoute><AppShell /></PrivateRoute>}>
+                  {/* HO */}
+                  <Route path="/dashboard/ho" element={<HODashboard />} />
+                  <Route path="/dashboard/ho/sites" element={<SiteManagement />} />
+                  <Route path="/dashboard/ho/clusters" element={<ClusterManagement />} />
+                  <Route path="/dashboard/ho/users" element={<UserManagement />} />
+                  <Route path="/dashboard/ho/scoring" element={<ScoringConfig />} />
+                  {/* Cluster */}
+                  <Route path="/dashboard/cluster" element={<ClusterDashboard />} />
+                  <Route path="/dashboard/cluster/validation" element={<EvidenceValidation />} />
+                  <Route path="/dashboard/cluster/quizzes" element={<QuizBuilder />} />
+                  <Route path="/dashboard/cluster/audits" element={<AuditReports />} />
+                  <Route path="/dashboard/cluster/incidents" element={<IncidentReporting />} />
+                  {/* Site */}
+                  <Route path="/dashboard/site" element={<SiteDashboard />} />
+                  <Route path="/dashboard/site/evidence" element={<SubmitEvidence />} />
+                  <Route path="/dashboard/site/quizzes" element={<SiteQuizzes />} />
+                  <Route path="/dashboard/site/performance" element={<SitePerformance />} />
+                  {/* Shared */}
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/tickets" element={<Tickets />} />
+                  <Route path="/notifications" element={<Notifications />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </AuthProvider>
         </DataProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { notifications as initialNotifs } from '@/mockData/notifications';
+import { useData } from '@/contexts/DataContext';
 
 export default function Notifications() {
-  const [notifs, setNotifs] = useState(initialNotifs);
+  const { notifications: notifs, markNotificationRead } = useData();
   const [tab, setTab] = useState('all');
 
-  const markAllRead = () => setNotifs(notifs.map(n => ({ ...n, read: true })));
+  const markAllRead = () => notifs.forEach(n => markNotificationRead(n.id));
 
   const filtered = tab === 'unread' ? notifs.filter(n => !n.read) : tab === 'important' ? notifs.filter(n => n.type === 'warning' || n.type === 'error') : notifs;
 
@@ -26,7 +26,7 @@ export default function Notifications() {
       <div className="bg-card rounded-xl border border-border shadow-sm divide-y divide-border">
         {filtered.length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No notifications</p>}
         {filtered.map(n => (
-          <div key={n.id} onClick={() => setNotifs(notifs.map(x => x.id === n.id ? { ...x, read: true } : x))} className={`flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-muted/30 transition ${!n.read ? 'bg-info/5' : ''}`}>
+          <div key={n.id} onClick={() => markNotificationRead(n.id)} className={`flex items-start gap-3 px-5 py-4 cursor-pointer hover:bg-muted/30 transition ${!n.read ? 'bg-info/5' : ''}`}>
             <span className="text-lg">{n.icon}</span>
             <div className="flex-1">
               <p className={`text-sm ${!n.read ? 'font-semibold' : ''}`}>{n.message}</p>

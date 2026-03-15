@@ -2,8 +2,13 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import { users as defaultUsers } from '@/mockData/users';
 import { sites as defaultSites } from '@/mockData/sites';
 import { clusters as defaultClusters } from '@/mockData/clusters';
+import { evidenceSubmissions as defaultSubmissions } from '@/mockData/evidenceSubmissions';
+import { tickets as defaultTickets } from '@/mockData/tickets';
+import { notifications as defaultNotifications } from '@/mockData/notifications';
+import { quizzes as defaultQuizzes } from '@/mockData/quizzes';
+import { scoringElements as defaultScoringElements } from '@/mockData/scoringElements';
 
-const KEYS = { users: 'sp_users', sites: 'sp_sites', clusters: 'sp_clusters' };
+const KEYS = { users: 'sp_users', sites: 'sp_sites', clusters: 'sp_clusters', submissions: 'sp_submissions', tickets: 'sp_tickets', notifications: 'sp_notifications', quizzes: 'sp_quizzes', scoring: 'sp_scoring' };
 
 function load(key, fallback) {
     try {
@@ -34,14 +39,27 @@ export const months = [
 const DataContext = createContext(null);
 
 export function DataProvider({ children }) {
-    const [users, setUsers] = useState(() => load(KEYS.users, defaultUsers));
+    const [users, setUsers] = useState(() => {
+        const loaded = load(KEYS.users, defaultUsers);
+        return loaded.map(u => ({ ...u, password: u.password || 'password' }));
+    });
     const [sites, setSites] = useState(() => load(KEYS.sites, defaultSites));
     const [clusters, setClusters] = useState(() => load(KEYS.clusters, defaultClusters));
+    const [submissions, setSubmissions] = useState(() => load(KEYS.submissions, defaultSubmissions));
+    const [tickets, setTickets] = useState(() => load(KEYS.tickets, defaultTickets));
+    const [notifications, setNotifications] = useState(() => load(KEYS.notifications, defaultNotifications));
+    const [quizzes, setQuizzes] = useState(() => load(KEYS.quizzes, defaultQuizzes));
+    const [scoringElements, setScoringElements] = useState(() => load(KEYS.scoring, defaultScoringElements));
 
     // Persist on every change
     useEffect(() => { save(KEYS.users, users); }, [users]);
     useEffect(() => { save(KEYS.sites, sites); }, [sites]);
     useEffect(() => { save(KEYS.clusters, clusters); }, [clusters]);
+    useEffect(() => { save(KEYS.submissions, submissions); }, [submissions]);
+    useEffect(() => { save(KEYS.tickets, tickets); }, [tickets]);
+    useEffect(() => { save(KEYS.notifications, notifications); }, [notifications]);
+    useEffect(() => { save(KEYS.quizzes, quizzes); }, [quizzes]);
+    useEffect(() => { save(KEYS.scoring, scoringElements); }, [scoringElements]);
 
     // --- Users ---
     const addUser = useCallback((user) => {
@@ -58,6 +76,19 @@ export function DataProvider({ children }) {
 
     const deleteUser = useCallback((id) => {
         setUsers(prev => prev.filter(u => u.id !== id));
+    }, []);
+
+    // --- Submissions ---
+    const addSubmission = useCallback((sub) => {
+        setSubmissions(prev => [...prev, { ...sub, id: String(Date.now()) }]);
+    }, []);
+
+    const updateSubmission = useCallback((id, updates) => {
+        setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+    }, []);
+
+    const deleteSubmission = useCallback((id) => {
+        setSubmissions(prev => prev.filter(s => s.id !== id));
     }, []);
 
     // --- Sites ---
@@ -95,7 +126,94 @@ export function DataProvider({ children }) {
         setUsers(defaultUsers);
         setSites(defaultSites);
         setClusters(defaultClusters);
+        setSubmissions(defaultSubmissions);
+        setTickets(defaultTickets);
+        setNotifications(defaultNotifications);
+        setQuizzes(defaultQuizzes);
+        setScoringElements(defaultScoringElements);
     }, []);
+
+    // --- Tickets ---
+    const addTicket = useCallback((ticket) => {
+        setTickets(prev => [...prev, { ...ticket, id: String(Date.now()), ticketId: `TICK-${Date.now()}` }]);
+    }, []);
+
+    const updateTicket = useCallback((id, updates) => {
+        setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
+    }, []);
+
+    // --- Notifications ---
+    const addNotification = useCallback((notif) => {
+        setNotifications(prev => [{ ...notif, id: String(Date.now()), read: false, time: 'Just now' }, ...prev]);
+    }, []);
+
+    const markNotificationRead = useCallback((id) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    }, []);
+
+    const deleteNotification = useCallback((id) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
+
+    // --- Quizzes ---
+    const addQuiz = useCallback((quiz) => {
+        setQuizzes(prev => [...prev, { ...quiz, id: String(Date.now()) }]);
+    }, []);
+
+    const updateQuiz = useCallback((id, updates) => {
+        setQuizzes(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
+    }, []);
+
+    const deleteQuiz = useCallback((id) => {
+        setQuizzes(prev => prev.filter(q => q.id !== id));
+    }, []);
+
+    // --- Scoring Configuration ---
+    const updateScoringElement = useCallback((id, updates) => {
+        setScoringElements(prev => prev.map(el => el.id === id ? { ...el, ...updates } : el));
+    }, []);
+
+    const resetScoringElements = useCallback(() => {
+        setScoringElements(defaultScoringElements);
+    }, []);
+
+    // --- Weighted Scoring Logic ---
+    const getSiteScore = useCallback((siteId, siteName, monthStr) => {
+        const prng = pseudoRandom(siteId + monthStr);
+        const activeElements = scoringElements.filter(e => e.active);
+
+        let totalWeightedScore = 0;
+        let totalWeight = 0;
+
+        // Elements 1-8 (Positive)
+        activeElements.filter(e => e.number <= 8).forEach(el => {
+            const subs = submissions.filter(s => s.site === siteName && s.elementNumber === el.number && s.month === monthStr);
+            const awarded = subs.filter(s => s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
+
+            // For demo: if no submissions, use PRNG performance (60-90%)
+            // If submissions exist, use actual performance
+            let performancePct = el.maxMarks > 0 ? (awarded / el.maxMarks) : 0;
+            if (subs.length === 0) {
+                performancePct = 0.6 + (prng() * 0.3);
+            }
+
+            totalWeightedScore += performancePct * el.weightage;
+            totalWeight += el.weightage;
+        });
+
+        // Normalize if total weight isn't 100 (optional, but good for safety)
+        let finalScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) * 100 : 0;
+
+        // Element 9 (Negative Incidents)
+        const incidentElement = activeElements.find(e => e.number === 9);
+        if (incidentElement) {
+            const incidents = submissions.filter(s => s.site === siteName && s.elementNumber === 9 && s.month === monthStr);
+            const totalDeduction = incidents.reduce((a, s) => a + Math.abs(s.marksAwarded || 0), 0);
+            finalScore = Math.max(0, finalScore - totalDeduction);
+        }
+
+        return Math.round(finalScore);
+    }, [scoringElements, submissions]);
 
     // --- Dynamic Leaderboard ---
     const getLeaderboard = useCallback((monthStr) => {
@@ -107,29 +225,32 @@ export function DataProvider({ children }) {
 
         const isCurrentMonth = monthIndex === months.length - 1;
 
-        let leaderboard = activeSites.map(site => {
-            // Use site id + month for deterministic but seemingly random historical data
+        // Pseudo-random helper for consistent mock data
+        const pseudoRandom = (seed) => {
+            let value = 0;
+            for (let i = 0; i < seed.length; i++) value = (value << 5) - value + seed.charCodeAt(i);
+            return () => {
+                value = (value * 16807) % 2147483647;
+                return (value - 1) / 2147483646;
+            };
+        };
+
+        return activeSites.map(site => {
             const prng = pseudoRandom(site.id + monthStr);
-            // Current month gets a slight boost to look like progress is happening
-            const baseScore = 50 + Math.floor(prng() * 40);
-            const score = isCurrentMonth ? Math.min(100, baseScore + 5) : baseScore;
+            const score = getSiteScore(site.id, site.name, monthStr);
 
             const totalPositive = score + Math.floor(prng() * 10);
             const totalNegative = -(totalPositive - score);
 
-            // Previous month score to calculate trend 'change'
-            const prevPrng = pseudoRandom(site.id + (months[monthIndex - 1] || 'Past'));
-            const prevScore = 50 + Math.floor(prevPrng() * 40);
+            const prevScore = getSiteScore(site.id, site.name, months[monthIndex - 1] || 'Past');
             const change = monthIndex === 0 ? 0 : score - prevScore;
 
-            // Generate realistic historical status
             const statuses = ['Fully Submitted', 'Partial', 'Pending'];
-            const statusIndex = isCurrentMonth
-                ? (score > 70 ? 0 : score > 50 ? 1 : 2) // Current month depends on score
-                : (prng() > 0.2 ? 0 : 1); // Historical is mostly fully submitted
+            const statusIndex = isCurrentMonth ? (score > 80 ? 0 : 1) : 0;
 
             return {
                 id: site.id,
+                rank: 0, // Calculated below
                 site: site.name,
                 cluster: site.cluster,
                 type: site.type,
@@ -139,15 +260,11 @@ export function DataProvider({ children }) {
                 change,
                 status: statuses[statusIndex],
                 history: months.slice(0, monthIndex + 1).map(m => {
-                    const hPrng = pseudoRandom(site.id + m);
-                    return { month: m.split(' ')[0], score: 50 + Math.floor(hPrng() * 40) };
+                    return { month: m.split(' ')[0], score: getSiteScore(site.id, site.name, m) };
                 })
             };
-        });
-
-        leaderboard.sort((a, b) => b.score - a.score);
-        return leaderboard.map((l, i) => ({ ...l, rank: i + 1 }));
-    }, [sites]);
+        }).sort((a, b) => b.score - a.score).map((s, i) => ({ ...s, rank: i + 1 }));
+    }, [sites, months]);
 
     const getFYLeaderboard = useCallback((year = '2025-26') => {
         const fyMonths = year === '2025-26'
@@ -163,13 +280,9 @@ export function DataProvider({ children }) {
             let previousMonthScore = 0;
 
             const history = fyMonths.map((m, index) => {
-                const prng = pseudoRandom(site.id + m);
-                const isLatestInFY = index === fyMonths.length - 1;
-                const baseScore = 45 + Math.floor(prng() * 45); // Adjust for variety
-                const score = isLatestInFY ? Math.min(100, baseScore + 5) : baseScore;
-
+                const score = getSiteScore(site.id, site.name, m);
                 totalHistoryScore += score;
-                if (isLatestInFY) currentMonthScore = score;
+                if (index === fyMonths.length - 1) currentMonthScore = score;
                 if (index === fyMonths.length - 2) previousMonthScore = score;
 
                 return { month: m.split(' ')[0], score };
@@ -213,8 +326,7 @@ export function DataProvider({ children }) {
             let totalScore = 0;
 
             const history = periodMonths.map(m => {
-                const prng = pseudoRandom(site.id + m);
-                const score = 45 + Math.floor(prng() * 45);
+                const score = getSiteScore(site.id, site.name, m);
                 totalScore += score;
                 return { month: m.split(' ')[0], score };
             });
@@ -314,10 +426,14 @@ export function DataProvider({ children }) {
 
     return (
         <DataContext.Provider value={{
-            users, sites, clusters, months,
+            users, sites, clusters, months, submissions, tickets, notifications, quizzes,
             addUser, updateUser, toggleUserStatus, deleteUser,
             addSite, updateSite, toggleSiteStatus, deleteSite,
             addCluster, updateCluster, deleteCluster,
+            addSubmission, updateSubmission, deleteSubmission,
+            addTicket, updateTicket, addNotification, markNotificationRead, deleteNotification,
+            addQuiz, updateQuiz, deleteQuiz,
+            scoringElements, updateScoringElement, resetScoringElements,
             resetData, getLeaderboard, getFYLeaderboard, getClusterLeaderboard, getPeriodLeaderboard,
         }}>
             {children}

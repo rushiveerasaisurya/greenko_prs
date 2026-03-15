@@ -2,18 +2,17 @@ import { motion } from 'framer-motion';
 import { Factory, ClipboardCheck, BarChart3, Ticket } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { evidenceSubmissions } from '@/mockData/evidenceSubmissions';
-import { tickets } from '@/mockData/tickets';
 import { RadialBarChart, RadialBar, ResponsiveContainer } from 'recharts';
 import { useData } from '@/contexts/DataContext';
 
 export default function ClusterDashboard() {
   const { user } = useAuth();
+  const { sites, months, getLeaderboard, submissions, tickets, notifications } = useData();
   const currentMonth = months[months.length - 1];
   const currentLeaderboard = getLeaderboard(currentMonth);
   const clusterSitesData = currentLeaderboard.filter(l => l.cluster === user?.cluster);
   const clusterSites = sites.filter(s => s.cluster === user?.cluster);
-  const pending = evidenceSubmissions.filter(e => e.status === 'PENDING' && clusterSites.some(s => s.name === e.site));
+  const pending = submissions.filter(e => e.status === 'PENDING' && clusterSites.some(s => s.name === e.site));
   const clusterTickets = tickets.filter(t => t.cluster === user?.cluster && t.status !== 'CLOSED');
 
   const avgScore = clusterSitesData.length > 0
@@ -49,7 +48,7 @@ export default function ClusterDashboard() {
               <tr key={l.rank} className={i % 2 === 0 ? 'bg-background' : 'bg-card'}>
                 <td className="px-3 py-2 font-bold">{l.rank}</td><td className="px-3 py-2 font-medium">{l.site}</td>
                 <td className="px-3 py-2 text-right text-score">{l.score}</td>
-                <td className="px-3 py-2 text-right">{evidenceSubmissions.filter(e => e.site === l.site && e.status === 'PENDING').length}</td>
+                <td className="px-3 py-2 text-right">{submissions.filter(e => e.site === l.site && e.status === 'PENDING').length}</td>
               </tr>
             ))}</tbody>
           </table>

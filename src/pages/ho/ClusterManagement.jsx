@@ -7,7 +7,9 @@ import { toast } from '@/hooks/use-toast';
 const emptyForm = { name: '', region: '', clusterHead: '', description: '' };
 
 export default function ClusterManagement() {
-  const { clusters, users, sites, addCluster, updateCluster, deleteCluster } = useData();
+  const { clusters, users, sites, months, getClusterLeaderboard, addCluster, updateCluster, deleteCluster } = useData();
+  const currentMonth = months[months.length - 1];
+  const clusterScores = getClusterLeaderboard(currentMonth);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -48,9 +50,11 @@ export default function ClusterManagement() {
           </tr></thead>
           <tbody>{clusters.map((c, i) => {
             const clusterSites = sites.filter(s => s.cluster === c.name);
+            const scoreData = clusterScores.find(cs => cs.cluster === c.name);
+            const displayScore = scoreData ? scoreData.score : 0;
             return (
               <tr key={c.id} className={i % 2 === 0 ? 'bg-background' : 'bg-card'}>
-                <td className="px-4 py-3 font-medium">{c.name}</td><td className="px-4 py-3 text-muted-foreground">{c.region}</td><td className="px-4 py-3">{c.clusterHead}</td><td className="px-4 py-3 text-right text-score">{clusterSites.length}</td><td className="px-4 py-3 text-right text-score">{c.avgScore}</td>
+                <td className="px-4 py-3 font-medium">{c.name}</td><td className="px-4 py-3 text-muted-foreground">{c.region}</td><td className="px-4 py-3">{c.clusterHead}</td><td className="px-4 py-3 text-right text-score">{clusterSites.length}</td><td className="px-4 py-3 text-right text-score">{displayScore}</td>
                 <td className="px-4 py-3 text-center"><span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-success/15 text-success">{c.status}</span></td>
                 <td className="px-4 py-3 text-center flex items-center justify-center gap-1">
                   <button onClick={() => openEdit(c)} className="p-1.5 rounded hover:bg-muted" title="Edit"><Pencil className="w-3.5 h-3.5" /></button>

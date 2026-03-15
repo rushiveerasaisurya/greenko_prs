@@ -1,26 +1,23 @@
 import { motion } from 'framer-motion';
 import { LayoutDashboard, Award, Trophy, FileUp } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { scoringElements } from '@/mockData/scoringElements';
-import { evidenceSubmissions } from '@/mockData/evidenceSubmissions';
-import { notifications } from '@/mockData/notifications';
 import { useData } from '@/contexts/DataContext';
 import { Link } from 'react-router-dom';
 
 export default function SiteDashboard() {
   const { user } = useAuth();
-  const { months, getLeaderboard } = useData();
+  const { months, getLeaderboard, submissions, notifications, scoringElements } = useData();
   const currentLeaderboard = getLeaderboard(months[months.length - 1]);
 
   const myEntry = currentLeaderboard.find(l => l.site === user?.site);
   const myScore = myEntry?.score ?? 0;
   const clusterRank = currentLeaderboard.filter(l => l.cluster === user?.cluster).findIndex(l => l.site === user?.site) + 1;
   const overallRank = myEntry?.rank ?? 0;
-  const pendingCount = evidenceSubmissions.filter(e => e.site === user?.site && (e.status === 'NOT_SUBMITTED' || e.status === 'REJECTED')).length;
+  const pendingCount = submissions.filter(e => e.site === user?.site && (e.status === 'NOT_SUBMITTED' || e.status === 'REJECTED')).length;
 
   const elements = scoringElements.filter(e => e.number <= 8);
   const elementStatus = elements.map(el => {
-    const subs = evidenceSubmissions.filter(e => e.site === user?.site && e.elementNumber === el.number);
+    const subs = submissions.filter(e => e.site === user?.site && e.elementNumber === el.number);
     const awarded = subs.filter(s => s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
     const allApproved = subs.length > 0 && subs.every(s => s.status === 'APPROVED');
     const anyPending = subs.some(s => s.status === 'PENDING');
@@ -58,7 +55,7 @@ export default function SiteDashboard() {
           { label: 'My Score', value: `${myScore} / 100`, icon: LayoutDashboard, color: 'bg-primary' },
           { label: 'Cluster Rank', value: `#${clusterRank} of ${currentLeaderboard.filter(l => l.cluster === user?.cluster).length}`, icon: Award, color: 'bg-secondary' },
           { label: 'Overall Rank', value: `#${overallRank} of ${currentLeaderboard.length}`, icon: Trophy, color: 'bg-info' },
-          { label: 'Pending Evidence', value: pendingCount + evidenceSubmissions.filter(e => e.site === user?.site && e.status === 'REJECTED').length, icon: FileUp, color: 'bg-accent' },
+          { label: 'Pending Evidence', value: pendingCount + submissions.filter(e => e.site === user?.site && e.status === 'REJECTED').length, icon: FileUp, color: 'bg-accent' },
         ].map(k => (
           <div key={k.label} className="bg-card rounded-xl border border-border p-4 shadow-sm hover:-translate-y-0.5 transition-transform">
             <div className="flex items-center gap-3">
@@ -72,20 +69,21 @@ export default function SiteDashboard() {
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Element Progress */}
         <div className="lg:col-span-2 bg-card rounded-xl border border-border p-5 shadow-sm">
-          <h3 className="font-display font-bold mb-4">Element Progress</h3>
+          <h3 className="font-display font-bold mb-4 text-foreground flex items-center gap-2"><LayoutDashboard className="w-4 h-4 text-primary" /> Element Progress</h3>
           <table className="w-full text-sm">
             <thead><tr className="bg-primary text-primary-foreground">
-              <th className="px-3 py-2 text-left">#</th><th className="px-3 py-2 text-left">Element</th><th className="px-3 py-2 text-right">Max</th><th className="px-3 py-2 text-right">Awarded</th><th className="px-3 py-2 text-center">Progress</th><th className="px-3 py-2 text-center">Status</th><th className="px-3 py-2 text-center">Action</th>
+              <th className="px-3 py-2 text-left">#</th><th className="px-3 py-2 text-left">Element</th><th className="px-3 py-2 text-right">Max</th><th className="px-3 py-2 text-right">Awarded</th><th className="px-3 py-2 text-right">Weight</th><th className="px-3 py-2 text-center">Progress</th><th className="px-3 py-2 text-center">Status</th><th className="px-3 py-2 text-center">Action</th>
             </tr></thead>
             <tbody>{elementStatus.map((el, i) => (
-              <tr key={el.id} className={i % 2 === 0 ? 'bg-background' : 'bg-card'}>
+              <tr key={el.id} className={`${i % 2 === 0 ? 'bg-background' : 'bg-card'} hover:bg-muted/30 transition-colors`}>
                 <td className="px-3 py-2 font-bold">{el.number}</td>
-                <td className="px-3 py-2 font-medium text-xs">{el.name}</td>
-                <td className="px-3 py-2 text-right text-score">{el.maxMarks}</td>
-                <td className="px-3 py-2 text-right text-score">{el.awarded}</td>
-                <td className="px-3 py-2"><div className="w-full bg-muted rounded-full h-2"><div className="bg-primary rounded-full h-2 transition-all" style={{ width: `${el.pct}%` }} /></div></td>
+                <td className="px-3 py-2 font-medium text-xs text-foreground/80">{el.name}</td>
+                <td className="px-3 py-2 text-right text-score font-semibold">{el.maxMarks}</td>
+                <td className="px-3 py-2 text-right text-score font-extrabold text-primary">{el.awarded}</td>
+                <td className="px-3 py-2 text-right text-xs text-muted-foreground">{el.weightage}%</td>
+                <td className="px-3 py-2"><div className="w-24 ml-auto bg-muted rounded-full h-1.5"><div className="bg-primary rounded-full h-1.5 transition-all shadow-[0_0_8px_rgba(var(--primary),0.4)]" style={{ width: `${el.pct}%` }} /></div></td>
                 <td className="px-3 py-2 text-center"><span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold ${el.status === 'All Approved' ? 'bg-success/15 text-success' : el.status === 'Not Started' ? 'bg-muted text-muted-foreground' : 'bg-warning/15 text-warning-foreground'}`}>{el.status}</span></td>
-                <td className="px-3 py-2 text-center"><Link to="/dashboard/site/evidence" className="text-[10px] font-semibold text-info hover:underline">Submit →</Link></td>
+                <td className="px-3 py-2 text-center"><Link to="/dashboard/site/evidence" className="text-[10px] font-bold text-info hover:text-info/80 hover:underline px-2 py-1 bg-info/5 rounded">Submit →</Link></td>
               </tr>
             ))}</tbody>
           </table>

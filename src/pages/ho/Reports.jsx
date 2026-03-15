@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { clusters } from '@/mockData/clusters';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 
 const trendData = [
@@ -8,7 +7,7 @@ const trendData = [
 import { useData } from '@/contexts/DataContext';
 
 export default function Reports() {
-  const { months, getLeaderboard } = useData();
+  const { months, getLeaderboard, clusters } = useData();
   const currentLeaderboard = getLeaderboard(months[months.length - 1]);
 
   return (

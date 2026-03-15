@@ -1,27 +1,24 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, Upload, X, FileText, Image, FileSpreadsheet, AlertCircle } from 'lucide-react';
-import { scoringElements } from '@/mockData/scoringElements';
-import { evidenceSubmissions } from '@/mockData/evidenceSubmissions';
 import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
 
 export default function SubmitEvidence() {
   const { user } = useAuth();
+  const { submissions, addSubmission, scoringElements } = useData();
   const [expanded, setExpanded] = useState(null);
-  const [submissions, setSubmissions] = useState(evidenceSubmissions);
   const [files, setFiles] = useState({});
   const [notes, setNotes] = useState({});
+  const [selectedMonth, setSelectedMonth] = useState('2026-03');
 
-  const elements = scoringElements.filter(e => e.number <= 8);
+  const elements = (scoringElements || []).filter(e => e.active && e.number <= 8);
 
-  const getSubStatus = (elementNum, subId) => {
-    const sub = submissions.find(s => s.site === user?.site && s.elementNumber === elementNum && s.subElement === scoringElements.flatMap(e => e.subElements).find(se => se.id === subId)?.description);
-    return sub?.status || 'NOT_SUBMITTED';
-  };
+
 
   const getSubSubmission = (elementNum, subDesc) => {
-    return submissions.find(s => s.site === user?.site && s.elementNumber === elementNum && s.subElement === subDesc);
+    return (submissions || []).find(s => s.site === user?.site && s.elementNumber === elementNum && s.subElement === subDesc && s.month === selectedMonth);
   };
 
   const handleFileAdd = (subId) => {
@@ -40,9 +37,9 @@ export default function SubmitEvidence() {
     const newSub = {
       id: String(Date.now()), site: user?.site || '', element: scoringElements.find(e => e.number === elementNum)?.name || '',
       elementNumber: elementNum, subElement, submittedBy: user?.name || '', date: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      filesCount: subFiles.length, status: 'PENDING', notes: notes[subId] || '', marksAwarded: null,
+      month: selectedMonth, filesCount: subFiles.length, status: 'PENDING', notes: notes[subId] || '', marksAwarded: null,
     };
-    setSubmissions([...submissions, newSub]);
+    addSubmission(newSub);
     setFiles({ ...files, [subId]: [] });
     setNotes({ ...notes, [subId]: '' });
     toast({ title: 'Evidence submitted for validation ✓' });
@@ -62,10 +59,13 @@ export default function SubmitEvidence() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-      <h2 className="font-display text-xl font-bold">Submit Evidence</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-xl font-bold">Submit Evidence</h2>
+        <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="px-3 py-1.5 rounded-lg border border-input bg-background text-sm font-medium" />
+      </div>
       <div className="space-y-3">
         {elements.map(el => {
-          const awarded = submissions.filter(s => s.site === user?.site && s.elementNumber === el.number && s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
+          const awarded = submissions.filter(s => s.site === user?.site && s.elementNumber === el.number && s.status === 'APPROVED' && s.month === selectedMonth).reduce((a, s) => a + (s.marksAwarded || 0), 0);
           return (
             <div key={el.id} className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
               <button onClick={() => setExpanded(expanded === el.id ? null : el.id)} className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition">

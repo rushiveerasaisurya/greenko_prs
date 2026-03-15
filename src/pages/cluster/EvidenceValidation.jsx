@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Check, XIcon, Eye, X } from 'lucide-react';
-import { evidenceSubmissions } from '@/mockData/evidenceSubmissions';
-import { scoringElements } from '@/mockData/scoringElements';
 import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
 
 export default function EvidenceValidation() {
-  const { sites } = useData();
-  const [submissions, setSubmissions] = useState(evidenceSubmissions);
+  const { sites, submissions, updateSubmission, scoringElements } = useData();
   const [filterSite, setFilterSite] = useState('');
   const [filterElement, setFilterElement] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
+  const [filterMonth, setFilterMonth] = useState('2026-03');
   const [reviewId, setReviewId] = useState(null);
   const [marks, setMarks] = useState('');
   const [remarks, setRemarks] = useState('');
@@ -19,12 +17,18 @@ export default function EvidenceValidation() {
   const filtered = submissions.filter(s =>
     (!filterSite || s.site === filterSite) &&
     (!filterElement || s.element === filterElement) &&
-    (!filterStatus || s.status === filterStatus)
+    (!filterStatus || s.status === filterStatus) &&
+    (!filterMonth || s.month === filterMonth)
   );
 
   const handleAction = (id, action) => {
     if (!remarks.trim()) { toast({ title: 'Remarks are required', variant: 'destructive' }); return; }
-    setSubmissions(submissions.map(s => s.id === id ? { ...s, status: action, marksAwarded: action === 'APPROVED' ? Number(marks) || 0 : null, remarks, rejectionReason: action === 'REJECTED' ? remarks : undefined } : s));
+    updateSubmission(id, {
+      status: action,
+      marksAwarded: action === 'APPROVED' ? Number(marks) || 0 : null,
+      remarks,
+      rejectionReason: action === 'REJECTED' ? remarks : undefined
+    });
     setReviewId(null); setMarks(''); setRemarks('');
     toast({ title: `Evidence ${action.toLowerCase()} ✓` });
   };
@@ -35,8 +39,9 @@ export default function EvidenceValidation() {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <h2 className="font-display text-xl font-bold">Evidence Validation</h2>
       <div className="flex flex-wrap gap-3">
+        <input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="px-3 py-2 rounded-lg border border-input bg-background text-sm" />
         <select value={filterSite} onChange={e => setFilterSite(e.target.value)} className="px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">All Sites</option>{sites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select>
-        <select value={filterElement} onChange={e => setFilterElement(e.target.value)} className="px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">All Elements</option>{scoringElements.map(e => <option key={e.id} value={e.name}>{e.name}</option>)}</select>
+        <select value={filterElement} onChange={e => setFilterElement(e.target.value)} className="px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">All Elements</option>{(scoringElements || []).map(e => <option key={e.id} value={e.name}>{e.name}</option>)}</select>
         <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className="px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">All Status</option><option value="PENDING">Pending</option><option value="APPROVED">Approved</option><option value="REJECTED">Rejected</option></select>
       </div>
 

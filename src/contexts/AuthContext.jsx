@@ -1,14 +1,10 @@
 import { createContext, useContext, useState } from 'react';
+import { useData } from './DataContext';
 
-const MOCK_CREDS = [
-  { email: 'ho@greenko.com', password: 'admin123', user: { id: '1', name: 'Rahul Sharma', role: 'HEAD_OFFICE' , cluster: null, site: null, avatar: 'RS' } },
-  { email: 'cluster@greenko.com', password: 'cluster123', user: { id: '2', name: 'Priya Mehta', role: 'CLUSTER_HEAD' , cluster: 'South Cluster', site: null, avatar: 'PM' } },
-  { email: 'site@greenko.com', password: 'site123', user: { id: '3', name: 'Arun Kumar', role: 'SITE_HEAD' , cluster: 'South Cluster', site: 'Kurnool Solar Plant', avatar: 'AK' } },
-];
-
-const AuthContext = createContext({} );
+const AuthContext = createContext({});
 
 export function AuthProvider({ children }) {
+  const { users } = useData();
   const [user, setUser] = useState(() => {
     try {
       const s = sessionStorage.getItem('ssrs_user');
@@ -19,9 +15,17 @@ export function AuthProvider({ children }) {
   });
 
   const login = (email, password) => {
-    const found = MOCK_CREDS.find(c => c.email === email && c.password === password);
-    if (!found) return 'Invalid email or password';
-    const u = { ...found.user, email };
+    const found = users.find(u => u.email === email && u.password === password && u.status === 'Active');
+    if (!found) return 'Invalid email or password, or account inactive';
+
+    // Auto-generate avatar from name
+    const initials = found.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+    const u = { ...found, avatar: initials };
+
+    // Hide password from stored session state
+    delete u.password;
+
     setUser(u);
     sessionStorage.setItem('ssrs_user', JSON.stringify(u));
     return null;

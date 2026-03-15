@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Factory, FolderTree, Users, Trophy, BarChart3,
   Settings, Calendar, Ticket, Bell, ClipboardCheck, FileQuestion,
   ClipboardList, FileUp, TrendingUp, Shield, ChevronLeft, ChevronRight,
-  LogOut, X
+  LogOut, X, AlertTriangle
 } from 'lucide-react';
 
 const navConfig = {
@@ -15,7 +15,6 @@ const navConfig = {
     { path: '/dashboard/ho/users', label: 'User Management', icon: Users },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/dashboard/ho/scoring', label: 'Scoring Config', icon: Settings },
-    { path: '/dashboard/ho/quarters', label: 'Quarter Mgmt', icon: Calendar },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/notifications', label: 'Notifications', icon: Bell },
   ],
@@ -26,6 +25,7 @@ const navConfig = {
     { path: '/leaderboard', label: 'Cluster Leaderboard', icon: Trophy },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/dashboard/cluster/audits', label: 'Audit Reports', icon: ClipboardList },
+    { path: '/dashboard/cluster/incidents', label: 'Incident Reporting', icon: AlertTriangle },
     { path: '/notifications', label: 'Notifications', icon: Bell },
   ],
   SITE_HEAD: [
