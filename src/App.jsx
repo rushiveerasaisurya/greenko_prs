@@ -43,9 +43,11 @@ function RoleRedirect() {
   const routes = {
     HEAD_OFFICE: '/dashboard/ho',
     CLUSTER_HEAD: '/dashboard/cluster',
+    CLUSTER_SAFETY_OFFICER: '/dashboard/cluster',
     SITE_HEAD: '/dashboard/site',
   };
-  return <Navigate to={routes[user.role]} replace />;
+  const activeRole = user.activeRole || (user.roles ? user.roles[0] : user.role) || 'SITE_HEAD';
+  return <Navigate to={routes[activeRole] || '/dashboard/site'} replace />;
 }
 
 const App = () => {
@@ -81,6 +83,7 @@ const App = () => {
                   <Route path="/dashboard/ho/clusters" element={<ClusterManagement />} />
                   <Route path="/dashboard/ho/users" element={<UserManagement />} />
                   <Route path="/dashboard/ho/scoring" element={<ScoringConfig />} />
+                  <Route path="/dashboard/ho/incidents" element={<IncidentReporting />} />
                   {/* Cluster */}
                   <Route path="/dashboard/cluster" element={<ClusterDashboard />} />
                   <Route path="/dashboard/cluster/validation" element={<EvidenceValidation />} />

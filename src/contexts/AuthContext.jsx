@@ -25,10 +25,21 @@ export function AuthProvider({ children }) {
 
     // Hide password from stored session state
     delete u.password;
+    
+    // Set a default active role
+    const defaultRole = u.roles ? u.roles[0] : (u.role || 'SITE_HEAD');
+    u.activeRole = defaultRole;
 
     setUser(u);
     sessionStorage.setItem('ssrs_user', JSON.stringify(u));
     return null;
+  };
+
+  const switchRole = (newRole) => {
+    if (!user) return;
+    const updatedUser = { ...user, activeRole: newRole };
+    setUser(updatedUser);
+    sessionStorage.setItem('ssrs_user', JSON.stringify(updatedUser));
   };
 
   const logout = () => {
@@ -36,7 +47,14 @@ export function AuthProvider({ children }) {
     sessionStorage.removeItem('ssrs_user');
   };
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  const updateSession = (updates) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    sessionStorage.setItem('ssrs_user', JSON.stringify(updatedUser));
+  };
+
+  return <AuthContext.Provider value={{ user, login, logout, switchRole, updateSession }}>{children}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);

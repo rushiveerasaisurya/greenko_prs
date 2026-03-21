@@ -15,10 +15,21 @@ const navConfig = {
     { path: '/dashboard/ho/users', label: 'User Management', icon: Users },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/dashboard/ho/scoring', label: 'Scoring Config', icon: Settings },
+    { path: '/dashboard/ho/incidents', label: 'Incident Reporting', icon: AlertTriangle },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/notifications', label: 'Notifications', icon: Bell },
   ],
   CLUSTER_HEAD: [
+    { path: '/dashboard/cluster', label: 'Dashboard', icon: LayoutDashboard },
+    { path: '/dashboard/cluster/validation', label: 'Evidence Validation', icon: ClipboardCheck },
+    { path: '/dashboard/cluster/quizzes', label: 'Quiz & Exam Builder', icon: FileQuestion },
+    { path: '/leaderboard', label: 'Cluster Leaderboard', icon: Trophy },
+    { path: '/tickets', label: 'Tickets', icon: Ticket },
+    { path: '/dashboard/cluster/audits', label: 'Audit Reports', icon: ClipboardList },
+    { path: '/dashboard/cluster/incidents', label: 'Incident Reporting', icon: AlertTriangle },
+    { path: '/notifications', label: 'Notifications', icon: Bell },
+  ],
+  CLUSTER_SAFETY_OFFICER: [
     { path: '/dashboard/cluster', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/dashboard/cluster/validation', label: 'Evidence Validation', icon: ClipboardCheck },
     { path: '/dashboard/cluster/quizzes', label: 'Quiz & Exam Builder', icon: FileQuestion },
@@ -42,6 +53,7 @@ const navConfig = {
 const roleLabels = {
   HEAD_OFFICE: 'Head Office',
   CLUSTER_HEAD: 'Cluster Head',
+  CLUSTER_SAFETY_OFFICER: 'Cluster Safety Officer',
   SITE_HEAD: 'Site Head',
 };
 
@@ -50,7 +62,8 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
   const location = useLocation();
 
   if (!user) return null;
-  const items = navConfig[user.role] || [];
+  const activeRole = user.activeRole || (user.roles ? user.roles[0] : user.role) || 'SITE_HEAD';
+  const items = navConfig[activeRole] || [];
 
   return (
     <>
@@ -108,7 +121,9 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
             {!collapsed && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold truncate">{user.name}</p>
-                <p className="text-[10px] opacity-70">{roleLabels[user.role]}</p>
+                <p className="text-[10px] opacity-70 truncate">
+                  {roleLabels[activeRole]}
+                </p>
               </div>
             )}
             {!collapsed && (

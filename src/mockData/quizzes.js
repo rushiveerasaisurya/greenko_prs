@@ -1,10 +1,10 @@
 export const quizzes = [
   {
-    id: '1', title: 'Safety Training Assessment Q3', type: 'MCQ',
+    id: '1', title: 'Safety Training Assessment', type: 'MCQ',
     element: 'Safety Training Completion', targetRole: 'SITE_HEAD',
     timeLimit: 30, passingScore: 70,
-    description: 'Quarterly safety knowledge assessment covering PPE usage, emergency procedures, and hazard identification.',
-    status: 'Published', assignedSites: ['Kurnool Solar Plant', 'Anantapur Wind Farm'],
+    description: 'Safety knowledge assessment covering PPE usage, emergency procedures, and hazard identification.',
+    status: 'Published', assignedSites: ['TS_DOM/Sunborne', 'TS_MV-REG'],
     startDate: '2026-03-01', endDate: '2026-03-31', createdBy: 'Priya Mehta',
     questions: [
       {

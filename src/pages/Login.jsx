@@ -13,30 +13,76 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, switchRole, updateSession } = useAuth();
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedCluster, setSelectedCluster] = useState('');
+  const [tempUser, setTempUser] = useState(null);
 
-  const handleSubmit = async (e) => {
+  const roleLabels = { HEAD_OFFICE: 'Head Office', CLUSTER_HEAD: 'Cluster Head', CLUSTER_SAFETY_OFFICER: 'Cluster Safety Officer', SITE_HEAD: 'Site Head' };
+
+  const handleInitialLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
-    const err = login(email, password);
+    
+    const err = login(email, password); 
     setLoading(false);
+    
     if (err) { setError(err); return; }
-    // As a fallback to ensure we grab the correct newly fetched user:
+    
     const fetchedUser = JSON.parse(sessionStorage.getItem('ssrs_user')) || {};
-    const userRole = fetchedUser.role;
+    const roles = fetchedUser.roles || (fetchedUser.role ? [fetchedUser.role] : []);
+    
+    if (roles.length > 1) {
+      setTempUser(fetchedUser);
+      setSelectedRole(roles[0]);
+      setStep(2);
+    } else {
+      if (roles[0] === 'CLUSTER_SAFETY_OFFICER') {
+        setTempUser(fetchedUser);
+        setSelectedRole(roles[0]);
+        setStep(3);
+      } else {
+        finalizeLogin(roles[0]);
+      }
+    }
+  };
 
+  const handleRoleSelection = (e) => {
+    e.preventDefault();
+    if (switchRole) {
+      switchRole(selectedRole);
+    }
+    if (selectedRole === 'CLUSTER_SAFETY_OFFICER') {
+      setStep(3);
+    } else {
+      finalizeLogin(selectedRole);
+    }
+  };
+
+  const handleClusterSelection = (e) => {
+    e.preventDefault();
+    if (!selectedCluster) { setError('Please select a cluster'); return; }
+    if (updateSession) updateSession({ cluster: selectedCluster });
+    else {
+      const current = JSON.parse(sessionStorage.getItem('ssrs_user')) || tempUser;
+      sessionStorage.setItem('ssrs_user', JSON.stringify({ ...current, cluster: selectedCluster }));
+    }
+    finalizeLogin(selectedRole);
+  };
+
+  const finalizeLogin = (roleToUse) => {
     const routes = {
       HEAD_OFFICE: '/dashboard/ho',
       CLUSTER_HEAD: '/dashboard/cluster',
+      CLUSTER_SAFETY_OFFICER: '/dashboard/cluster',
       SITE_HEAD: '/dashboard/site',
     };
-    navigate(routes[userRole] || '/dashboard/site');
+    navigate(routes[roleToUse] || '/dashboard/site');
   };
-
-  const quickLogin = (e, p) => { setEmail(e); setPassword(p); };
 
   return (
     <div className="min-h-screen flex">
@@ -66,60 +112,95 @@ export default function Login() {
             <span className="text-xl font-bold font-display text-foreground">GREENKO SSRS</span>
           </div>
 
-          <h2 className="text-2xl font-bold font-display text-foreground mb-1">Welcome back</h2>
-          <p className="text-muted-foreground text-sm mb-8">Sign in to access your safety dashboard</p>
+          <h2 className="text-2xl font-bold font-display text-foreground mb-1">{step === 1 ? 'Welcome back' : step === 2 ? 'Select Your Role' : 'Explore Cluster'}</h2>
+          <p className="text-muted-foreground text-sm mb-8">{step === 1 ? 'Sign in to access your safety dashboard' : step === 2 ? `Welcome, ${tempUser?.name}. Choose a role to continue.` : 'Which cluster would you like to view?'}</p>
 
           {error && <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm font-medium">{error}</div>}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="font-display font-semibold">Email</Label>
-              <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@greenko.com" required className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="font-display font-semibold">Password</Label>
-              <div className="relative">
-                <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="h-11 pr-10" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {step === 1 ? (
+            <form onSubmit={handleInitialLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="font-display font-semibold">Email</Label>
+                <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@greenko.com" required className="h-11" />
               </div>
-            </div>
-            <div className="flex justify-end">
-              <span className="text-sm text-info hover:underline cursor-pointer">Forgot Password?</span>
-            </div>
-            <Button type="submit" disabled={loading} className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-display font-bold text-sm">
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
-                  Signing in...
-                </span>
-              ) : 'Sign In'}
-            </Button>
-          </form>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="font-display font-semibold">Password</Label>
+                <div className="relative">
+                  <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required className="h-11 pr-10" />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="flex justify-end">
+                <span className="text-sm text-info hover:underline cursor-pointer">Forgot Password?</span>
+              </div>
+              <Button type="submit" disabled={loading} className="w-full h-11 bg-accent hover:bg-accent/90 text-accent-foreground font-display font-bold text-sm">
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-accent-foreground/30 border-t-accent-foreground rounded-full animate-spin" />
+                    Signing in...
+                  </span>
+                ) : 'Sign In'}
+              </Button>
+            </form>
+          ) : step === 2 ? (
+            <form onSubmit={handleRoleSelection} className="space-y-4">
+              <div className="grid grid-cols-1 gap-3">
+                {tempUser?.roles?.map((r) => (
+                  <button 
+                    key={r}
+                    type="button" 
+                    onClick={() => setSelectedRole(r)}
+                    className={`p-4 rounded-xl border-2 text-left transition flex items-center justify-between ${selectedRole === r ? 'border-primary bg-primary/5' : 'border-input hover:border-muted-foreground'}`}
+                  >
+                    <div>
+                      <span className="block font-bold text-sm">{roleLabels[r]}</span>
+                      {r === 'SITE_HEAD' && <span className="block text-xs text-muted-foreground mt-0.5">{tempUser.site}</span>}
+                      {r === 'CLUSTER_HEAD' && <span className="block text-xs text-muted-foreground mt-0.5">{tempUser.cluster}</span>}
+                      {r === 'CLUSTER_SAFETY_OFFICER' && <span className="block text-xs text-muted-foreground mt-0.5">{tempUser.accessibleClusters?.length} accessible clusters</span>}
+                    </div>
+                    {selectedRole === r && <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>}
+                  </button>
+                ))}
+              </div>
+              <div className="pt-2">
+                <Button type="submit" className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-bold text-sm">
+                  Continue as {roleLabels[selectedRole]}
+                </Button>
+              </div>
+              <div className="text-center mt-2">
+                <button type="button" onClick={() => setStep(1)} className="text-xs text-muted-foreground hover:underline">← Back to login</button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleClusterSelection} className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 max-h-[40vh] overflow-y-auto pr-1 pb-1">
+                {tempUser?.accessibleClusters?.map((c) => (
+                  <button 
+                    key={c}
+                    type="button" 
+                    onClick={() => setSelectedCluster(c)}
+                    className={`p-4 rounded-xl border-2 text-left transition flex items-center justify-between ${selectedCluster === c ? 'border-primary bg-primary/5' : 'border-input hover:border-muted-foreground'}`}
+                  >
+                    <div>
+                      <span className="block font-bold text-sm">{c}</span>
+                    </div>
+                    {selectedCluster === c && <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center"><div className="w-1.5 h-1.5 bg-white rounded-full" /></div>}
+                  </button>
+                ))}
+              </div>
+              <div className="pt-2">
+                <Button type="submit" disabled={!selectedCluster} className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground font-display font-bold text-sm">
+                  Enter Cluster
+                </Button>
+              </div>
+              <div className="text-center mt-2">
+                <button type="button" onClick={() => setStep(tempUser?.roles?.length > 1 ? 2 : 1)} className="text-xs text-muted-foreground hover:underline">← Back</button>
+              </div>
+            </form>
+          )}
 
-          {/* Demo accounts */}
-          <div className="mt-8 pt-6 border-t border-border">
-            <p className="text-xs text-muted-foreground font-semibold mb-3 uppercase tracking-wide">Demo Accounts</p>
-            <div className="space-y-2">
-              {[
-                { label: 'Head Office / Admin', email: 'ho@greenko.com', pw: 'password', color: 'bg-primary' },
-                { label: 'Cluster Head / Safety Officer', email: 'cluster@greenko.com', pw: 'password', color: 'bg-secondary' },
-                { label: 'Site Head', email: 'site@greenko.com', pw: 'password', color: 'bg-accent' },
-              ].map(r => (
-                <button key={r.email} type="button" onClick={() => quickLogin(r.email, r.pw)}
-                  className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/50 transition-all text-left">
-                  <div className={`w-8 h-8 rounded-md ${r.color} flex items-center justify-center shrink-0`}>
-                    <Shield className="w-4 h-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{r.label}</p>
-                    <p className="text-[11px] text-muted-foreground">{r.email}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
           <p className="text-center text-xs text-muted-foreground mt-8">Confidential — Internal Use Only</p>
         </motion.div>
       </div>

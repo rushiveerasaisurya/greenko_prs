@@ -2,14 +2,21 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertTriangle, Plus } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 
 export default function IncidentReporting() {
-    const { sites, submissions, addSubmission, scoringElements } = useData();
+    const { user } = useAuth();
+    const { sites, submissions, addSubmission, scoringElements, months } = useData();
     const [site, setSite] = useState('');
-    const [month, setMonth] = useState('2026-03');
+    const [month, setMonth] = useState(months ? months[months.length - 1] : 'Mar 2026');
     const [typeId, setTypeId] = useState('');
     const [description, setDescription] = useState('');
+
+    const activeRole = user?.activeRole || (user?.roles ? user.roles[0] : user?.role);
+    const availableSites = activeRole === 'HEAD_OFFICE' 
+        ? sites 
+        : sites.filter(s => s.cluster === user?.cluster);
 
     const element9 = scoringElements.find(e => e.number === 9);
 
@@ -26,7 +33,7 @@ export default function IncidentReporting() {
             element: element9?.name || 'Negative Grade',
             elementNumber: 9,
             subElement: subElement.description,
-            submittedBy: 'Cluster Head',
+            submittedBy: user?.name || 'User',
             date: new Date().toISOString().slice(0, 16).replace('T', ' '),
             notes: description,
             filesCount: 0,
@@ -39,7 +46,13 @@ export default function IncidentReporting() {
         toast({ title: 'Incident logged successfully', variant: 'destructive' });
     };
 
-    const myIncidents = submissions.filter(s => s.elementNumber === 9);
+    const myIncidents = submissions.filter(s => {
+        if (s.elementNumber !== 9) return false;
+        if (activeRole === 'HEAD_OFFICE') return true;
+        // For cluster heads and safety officers, show only incidents from their cluster
+        const siteData = sites.find(siteItem => siteItem.name === s.site);
+        return siteData?.cluster === user?.cluster;
+    });
 
     return (
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
@@ -53,11 +66,16 @@ export default function IncidentReporting() {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground block mb-1">Select Site</label>
-                            <select value={site} onChange={e => setSite(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">-- Choose Site --</option>{sites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select>
+                            <select value={site} onChange={e => setSite(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm">
+                                <option value="">-- Choose Site --</option>
+                                {availableSites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}
+                            </select>
                         </div>
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground block mb-1">Month</label>
-                            <input type="month" value={month} onChange={e => setMonth(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm" />
+                            <select value={month} onChange={e => setMonth(e.target.value)} className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm">
+                                {months?.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
                         </div>
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground block mb-1">Incident Type</label>

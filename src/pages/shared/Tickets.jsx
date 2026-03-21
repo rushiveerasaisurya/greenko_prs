@@ -26,10 +26,13 @@ export default function Tickets() {
   const [caForm, setCaForm] = useState({ action: '', assignedTo: '', dueDate: '' });
   const [closureNotes, setClosureNotes] = useState('');
 
+  const activeRole = user?.activeRole || user?.roles?.[0] || user?.role || 'SITE_HEAD';
+  
   const scoped = ticketList.filter(t => {
-    if (user?.role === 'SITE_HEAD') return t.site === user.site;
-    if (user?.role === 'CLUSTER_HEAD') return t.cluster === user.cluster;
-    return true;
+    if (activeRole === 'HEAD_OFFICE') return true;
+    if ((activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER') && t.cluster === user.cluster) return true;
+    if (activeRole === 'SITE_HEAD' && t.site === user.site) return true;
+    return false;
   });
   const filtered = scoped.filter(t => (!filterType || t.type === filterType) && (!filterStatus || t.status === filterStatus));
   const detail = ticketList.find(t => t.id === detailId);
@@ -142,7 +145,7 @@ export default function Tickets() {
                   <div><p className={ca.done ? 'line-through text-muted-foreground' : ''}>{ca.action}</p><p className="text-muted-foreground">{ca.assignedTo} · Due: {ca.dueDate}</p></div>
                 </div>
               ))}
-              {user?.role === 'CLUSTER_HEAD' && detail.status !== 'CLOSED' && (
+              {(activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER') && detail.status !== 'CLOSED' && (
                 <div className="mt-3 space-y-2 pt-3 border-t border-border">
                   <input value={caForm.action} onChange={e => setCaForm({ ...caForm, action: e.target.value })} placeholder="Action..." className="w-full px-2 py-1.5 rounded border border-input bg-background text-xs" />
                   <div className="flex gap-2">
@@ -154,7 +157,7 @@ export default function Tickets() {
               )}
             </div>
 
-            {user?.role === 'CLUSTER_HEAD' && detail.status !== 'CLOSED' && allCADone && (
+            {(activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER') && detail.status !== 'CLOSED' && allCADone && (
               <div className="bg-card rounded-xl border border-border p-5 shadow-sm">
                 <h4 className="font-display font-semibold text-sm mb-3">Close Ticket</h4>
                 <textarea value={closureNotes} onChange={e => setClosureNotes(e.target.value)} placeholder="Closure notes..." className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm mb-3" rows={3} />

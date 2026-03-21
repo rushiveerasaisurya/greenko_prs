@@ -8,7 +8,7 @@ import { notifications as defaultNotifications } from '@/mockData/notifications'
 import { quizzes as defaultQuizzes } from '@/mockData/quizzes';
 import { scoringElements as defaultScoringElements } from '@/mockData/scoringElements';
 
-const KEYS = { users: 'sp_users', sites: 'sp_sites', clusters: 'sp_clusters', submissions: 'sp_submissions', tickets: 'sp_tickets', notifications: 'sp_notifications', quizzes: 'sp_quizzes', scoring: 'sp_scoring' };
+const KEYS = { users: 'sp_users_v2', sites: 'sp_sites_v2', clusters: 'sp_clusters_v2', submissions: 'sp_submissions_v2', tickets: 'sp_tickets_v2', notifications: 'sp_notifications_v2', quizzes: 'sp_quizzes_v2', scoring: 'sp_scoring_v2' };
 
 function load(key, fallback) {
     try {
@@ -61,31 +61,139 @@ export function DataProvider({ children }) {
     useEffect(() => { save(KEYS.quizzes, quizzes); }, [quizzes]);
     useEffect(() => { save(KEYS.scoring, scoringElements); }, [scoringElements]);
 
+    // --- Notifications ---
+    const addNotification = useCallback((notif) => {
+        setNotifications(prev => [{ ...notif, id: String(Date.now()), read: false, time: 'Just now' }, ...prev]);
+    }, []);
+
+    const markNotificationRead = useCallback((id) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    }, []);
+
+    const deleteNotification = useCallback((id) => {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+    }, []);
+
     // --- Users ---
     const addUser = useCallback((user) => {
-        setUsers(prev => [...prev, { ...user, id: String(Date.now()), lastLogin: 'Never' }]);
+        const id = String(Date.now());
+        setUsers(prev => [...prev, { ...user, id, lastLogin: 'Never' }]);
+        
+        // Sync with Sites
+        if (user.site) {
+            setSites(sPrev => sPrev.map(s => s.name === user.site ? { ...s, siteHead: user.name } : s));
+        }
+        // Sync with Clusters
+        if (user.cluster) {
+            setClusters(cPrev => cPrev.map(c => c.name === user.cluster ? { ...c, head: user.name } : c));
+        }
     }, []);
 
     const updateUser = useCallback((id, updates) => {
-        setUsers(prev => prev.map(u => u.id === id ? { ...u, ...updates } : u));
+        setUsers(prev => {
+            const user = prev.find(u => u.id === id);
+            if (!user) return prev;
+
+            // Sync with Sites if site assignment changes
+            if (updates.site !== undefined && updates.site !== user.site) {
+                if (user.site) {
+                    setSites(sPrev => sPrev.map(s => s.name === user.site ? { ...s, siteHead: '' } : s));
+                }
+                if (updates.site) {
+                    setSites(sPrev => sPrev.map(s => s.name === updates.site ? { ...s, siteHead: user.name } : s));
+                }
+            }
+
+            // Sync with Clusters if cluster assignment changes
+            if (updates.cluster !== undefined && updates.cluster !== user.cluster) {
+                if (user.cluster) {
+                    setClusters(cPrev => cPrev.map(c => c.name === user.cluster ? { ...c, head: '' } : c));
+                }
+                if (updates.cluster) {
+                    setClusters(cPrev => cPrev.map(c => c.name === updates.cluster ? { ...c, head: user.name } : c));
+                }
+            }
+
+            return prev.map(u => u.id === id ? { ...u, ...updates } : u);
+        });
     }, []);
 
     const toggleUserStatus = useCallback((id) => {
-        setUsers(prev => prev.map(u => u.id === id ? { ...u, status: u.status === 'Active' ? 'Inactive' : 'Active' } : u));
-    }, []);
+        setUsers(prev => {
+            const user = prev.find(u => u.id === id);
+            const newStatus = user?.status === 'Active' ? 'Inactive' : 'Active';
+            
+            if (newStatus === 'Inactive') {
+                // Clear site head assignments
+                setSites(sPrev => sPrev.map(s => s.siteHead === user?.name ? { ...s, siteHead: '' } : s));
+                // Clear cluster head assignments
+                setClusters(cPrev => cPrev.map(c => c.head === user?.name ? { ...c, head: '' } : c));
+                
+                addNotification({
+                    icon: '🚫',
+                    message: `User ${user?.name} deactivated. Head office assignments cleared.`,
+                    targetSite: user?.site,
+                    targetCluster: user?.cluster
+                });
+            } else if (user) {
+                // Restore site head assignments
+                if (user.site) {
+                    setSites(sPrev => sPrev.map(s => s.name === user.site ? { ...s, siteHead: user.name } : s));
+                }
+                // Restore cluster head assignments
+                if (user.cluster) {
+                    setClusters(cPrev => cPrev.map(c => c.name === user.cluster ? { ...c, head: user.name } : c));
+                }
+                
+                addNotification({
+                    icon: '✅',
+                    message: `User ${user.name} activated. Head office assignments restored.`,
+                    targetSite: user.site,
+                    targetCluster: user.cluster
+                });
+            }
+            
+            return prev.map(u => u.id === id ? { ...u, status: newStatus } : u);
+        });
+    }, [addNotification]);
 
     const deleteUser = useCallback((id) => {
-        setUsers(prev => prev.filter(u => u.id !== id));
+        setUsers(prev => {
+            const user = prev.find(u => u.id === id);
+            if (user) {
+                setSites(sPrev => sPrev.map(s => s.siteHead === user.name ? { ...s, siteHead: '' } : s));
+                setClusters(cPrev => cPrev.map(c => c.head === user.name ? { ...c, head: '' } : c));
+            }
+            return prev.filter(u => u.id !== id);
+        });
     }, []);
 
     // --- Submissions ---
     const addSubmission = useCallback((sub) => {
-        setSubmissions(prev => [...prev, { ...sub, id: String(Date.now()) }]);
-    }, []);
+        const id = String(Date.now());
+        setSubmissions(prev => [...prev, { ...sub, id }]);
+        addNotification({
+            icon: '📤',
+            message: `New evidence submitted for ${sub.site}: ${sub.element}`,
+            targetSite: sub.site,
+            targetCluster: sub.cluster
+        });
+    }, [addNotification]);
 
     const updateSubmission = useCallback((id, updates) => {
-        setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
-    }, []);
+        setSubmissions(prev => {
+            const current = prev.find(s => s.id === id);
+            if (current && updates.status && updates.status !== current.status) {
+                addNotification({
+                    icon: updates.status === 'APPROVED' ? '✅' : '❌',
+                    message: `Evidence for ${current.site} (${current.element}) has been ${updates.status.toLowerCase()}`,
+                    targetSite: current.site,
+                    targetCluster: current.cluster
+                });
+            }
+            return prev.map(s => s.id === id ? { ...s, ...updates } : s);
+        });
+    }, [addNotification]);
 
     const deleteSubmission = useCallback((id) => {
         setSubmissions(prev => prev.filter(s => s.id !== id));
@@ -97,7 +205,18 @@ export function DataProvider({ children }) {
     }, []);
 
     const updateSite = useCallback((id, updates) => {
-        setSites(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+        setSites(prev => {
+            const site = prev.find(s => s.id === id);
+            // If head is changing, update users
+            if (updates.siteHead !== undefined && updates.siteHead !== site.siteHead) {
+                setUsers(uPrev => uPrev.map(u => {
+                    if (u.name === updates.siteHead) return { ...u, site: site.name, role: 'SITE_HEAD' };
+                    if (u.name === site.siteHead) return { ...u, site: '' };
+                    return u;
+                }));
+            }
+            return prev.map(s => s.id === id ? { ...s, ...updates } : s);
+        });
     }, []);
 
     const toggleSiteStatus = useCallback((id) => {
@@ -114,7 +233,17 @@ export function DataProvider({ children }) {
     }, []);
 
     const updateCluster = useCallback((id, updates) => {
-        setClusters(prev => prev.map(c => c.id === id ? { ...c, ...updates } : c));
+        setClusters(prev => {
+            const cluster = prev.find(c => c.id === id);
+            if (updates.head !== undefined && updates.head !== cluster.head) {
+                setUsers(uPrev => uPrev.map(u => {
+                    if (u.name === updates.head) return { ...u, cluster: cluster.name, role: 'CLUSTER_HEAD' };
+                    if (u.name === cluster.head) return { ...u, cluster: '' };
+                    return u;
+                }));
+            }
+            return prev.map(c => c.id === id ? { ...c, ...updates } : c);
+        });
     }, []);
 
     const deleteCluster = useCallback((id) => {
@@ -135,25 +264,33 @@ export function DataProvider({ children }) {
 
     // --- Tickets ---
     const addTicket = useCallback((ticket) => {
-        setTickets(prev => [...prev, { ...ticket, id: String(Date.now()), ticketId: `TICK-${Date.now()}` }]);
-    }, []);
+        const id = String(Date.now());
+        const ticketId = `TICK-${id}`;
+        setTickets(prev => [...prev, { ...ticket, id, ticketId }]);
+        addNotification({
+            icon: '🎫',
+            message: `New ticket ${ticketId} created for ${ticket.site}`,
+            targetSite: ticket.site,
+            targetCluster: ticket.cluster
+        });
+    }, [addNotification]);
 
     const updateTicket = useCallback((id, updates) => {
-        setTickets(prev => prev.map(t => t.id === id ? { ...t, ...updates } : t));
-    }, []);
+        setTickets(prev => {
+            const current = prev.find(t => t.id === id);
+            if (current && updates.status && updates.status !== current.status) {
+                addNotification({
+                    icon: '🎫',
+                    message: `Ticket ${current.ticketId} for ${current.site} status changed to ${updates.status}`,
+                    targetSite: current.site,
+                    targetCluster: current.cluster
+                });
+            }
+            return prev.map(t => t.id === id ? { ...t, ...updates } : t);
+        });
+    }, [addNotification]);
 
-    // --- Notifications ---
-    const addNotification = useCallback((notif) => {
-        setNotifications(prev => [{ ...notif, id: String(Date.now()), read: false, time: 'Just now' }, ...prev]);
-    }, []);
 
-    const markNotificationRead = useCallback((id) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    }, []);
-
-    const deleteNotification = useCallback((id) => {
-        setNotifications(prev => prev.filter(n => n.id !== id));
-    }, []);
 
     // --- Quizzes ---
     const addQuiz = useCallback((quiz) => {
@@ -178,8 +315,7 @@ export function DataProvider({ children }) {
     }, []);
 
     // --- Weighted Scoring Logic ---
-    const getSiteScore = useCallback((siteId, siteName, monthStr) => {
-        const prng = pseudoRandom(siteId + monthStr);
+    const getSiteScoreDetails = useCallback((siteId, siteName, monthStr) => {
         const activeElements = scoringElements.filter(e => e.active);
 
         let totalWeightedScore = 0;
@@ -190,30 +326,34 @@ export function DataProvider({ children }) {
             const subs = submissions.filter(s => s.site === siteName && s.elementNumber === el.number && s.month === monthStr);
             const awarded = subs.filter(s => s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
 
-            // For demo: if no submissions, use PRNG performance (60-90%)
-            // If submissions exist, use actual performance
             let performancePct = el.maxMarks > 0 ? (awarded / el.maxMarks) : 0;
-            if (subs.length === 0) {
-                performancePct = 0.6 + (prng() * 0.3);
-            }
-
             totalWeightedScore += performancePct * el.weightage;
             totalWeight += el.weightage;
         });
 
-        // Normalize if total weight isn't 100 (optional, but good for safety)
-        let finalScore = totalWeight > 0 ? (totalWeightedScore / totalWeight) * 100 : 0;
+        const totalPositive = totalWeight > 0 ? (totalWeightedScore / totalWeight) * 100 : 0;
 
         // Element 9 (Negative Incidents)
+        let totalNegative = 0;
         const incidentElement = activeElements.find(e => e.number === 9);
         if (incidentElement) {
             const incidents = submissions.filter(s => s.site === siteName && s.elementNumber === 9 && s.month === monthStr);
-            const totalDeduction = incidents.reduce((a, s) => a + Math.abs(s.marksAwarded || 0), 0);
-            finalScore = Math.max(0, finalScore - totalDeduction);
+            totalNegative = incidents.reduce((a, s) => a + Math.abs(s.marksAwarded || 0), 0);
         }
 
-        return Math.round(finalScore);
+        // Allow scores to drop below 0
+        const score = totalPositive - totalNegative;
+
+        return {
+            score: parseFloat(score.toFixed(1)),
+            totalPositive: parseFloat(totalPositive.toFixed(1)),
+            totalNegative: parseFloat(totalNegative.toFixed(1))
+        };
     }, [scoringElements, submissions]);
+
+    const getSiteScore = useCallback((siteId, siteName, monthStr) => {
+        return getSiteScoreDetails(siteId, siteName, monthStr).score;
+    }, [getSiteScoreDetails]);
 
     // --- Dynamic Leaderboard ---
     const getLeaderboard = useCallback((monthStr) => {
@@ -237,10 +377,10 @@ export function DataProvider({ children }) {
 
         return activeSites.map(site => {
             const prng = pseudoRandom(site.id + monthStr);
-            const score = getSiteScore(site.id, site.name, monthStr);
-
-            const totalPositive = score + Math.floor(prng() * 10);
-            const totalNegative = -(totalPositive - score);
+            const details = getSiteScoreDetails(site.id, site.name, monthStr);
+            const score = details.score;
+            const totalPositive = details.totalPositive;
+            const totalNegative = details.totalNegative;
 
             const prevScore = getSiteScore(site.id, site.name, months[monthIndex - 1] || 'Past');
             const change = monthIndex === 0 ? 0 : score - prevScore;
@@ -264,7 +404,7 @@ export function DataProvider({ children }) {
                 })
             };
         }).sort((a, b) => b.score - a.score).map((s, i) => ({ ...s, rank: i + 1 }));
-    }, [sites, months]);
+    }, [sites, months, getSiteScoreDetails]);
 
     const getFYLeaderboard = useCallback((year = '2025-26') => {
         const fyMonths = year === '2025-26'
@@ -278,20 +418,26 @@ export function DataProvider({ children }) {
             let totalHistoryScore = 0;
             let currentMonthScore = 0;
             let previousMonthScore = 0;
+            let totalHistoryPositive = 0;
+            let totalHistoryNegative = 0;
 
             const history = fyMonths.map((m, index) => {
-                const score = getSiteScore(site.id, site.name, m);
+                const details = getSiteScoreDetails(site.id, site.name, m);
+                const score = details.score;
                 totalHistoryScore += score;
+                totalHistoryPositive += details.totalPositive;
+                totalHistoryNegative += details.totalNegative;
+                
                 if (index === fyMonths.length - 1) currentMonthScore = score;
                 if (index === fyMonths.length - 2) previousMonthScore = score;
 
                 return { month: m.split(' ')[0], score };
             });
 
-            const avgScore = Math.round(totalHistoryScore / fyMonths.length);
-            const change = currentMonthScore - previousMonthScore;
-            const totalPositive = avgScore + Math.floor(pseudoRandom(site.id + 'fy' + year)() * 10);
-            const totalNegative = -(totalPositive - avgScore);
+            const avgScore = parseFloat((totalHistoryScore / fyMonths.length).toFixed(1));
+            const change = parseFloat((currentMonthScore - previousMonthScore).toFixed(1));
+            const totalPositive = parseFloat((totalHistoryPositive / fyMonths.length).toFixed(1));
+            const totalNegative = parseFloat((totalHistoryNegative / fyMonths.length).toFixed(1));
 
             const statuses = ['Fully Submitted', 'Partial', 'Pending'];
             const statusIndex = avgScore > 70 ? 0 : avgScore > 50 ? 1 : 2;
@@ -312,7 +458,7 @@ export function DataProvider({ children }) {
 
         leaderboard.sort((a, b) => b.score - a.score);
         return leaderboard.map((l, i) => ({ ...l, rank: i + 1 }));
-    }, [sites]);
+    }, [sites, months, getSiteScoreDetails]);
 
     const getPeriodLeaderboard = useCallback((startMonth, endMonth) => {
         const startIndex = months.indexOf(startMonth);
@@ -324,25 +470,29 @@ export function DataProvider({ children }) {
 
         let leaderboard = activeSites.map(site => {
             let totalScore = 0;
+            let totalHistoryPositive = 0;
+            let totalHistoryNegative = 0;
 
             const history = periodMonths.map(m => {
-                const score = getSiteScore(site.id, site.name, m);
+                const details = getSiteScoreDetails(site.id, site.name, m);
+                const score = details.score;
                 totalScore += score;
+                totalHistoryPositive += details.totalPositive;
+                totalHistoryNegative += details.totalNegative;
                 return { month: m.split(' ')[0], score };
             });
 
-            const avgScore = Math.round(totalScore / periodMonths.length);
+            const avgScore = parseFloat((totalScore / periodMonths.length).toFixed(1));
 
             // For change, compare with the month before the start month
             let change = 0;
             if (startIndex > 0) {
-                const prevPrng = pseudoRandom(site.id + months[startIndex - 1]);
-                const prevScore = 45 + Math.floor(prevPrng() * 45);
-                change = avgScore - prevScore;
+                const prevScore = getSiteScore(site.id, site.name, months[startIndex - 1]);
+                change = parseFloat((avgScore - prevScore).toFixed(1));
             }
 
-            const totalPositive = avgScore + Math.floor(pseudoRandom(site.id + 'period' + startMonth + endMonth)() * 10);
-            const totalNegative = -(totalPositive - avgScore);
+            const totalPositive = parseFloat((totalHistoryPositive / periodMonths.length).toFixed(1));
+            const totalNegative = parseFloat((totalHistoryNegative / periodMonths.length).toFixed(1));
             const statuses = ['Fully Submitted', 'Partial', 'Pending'];
             const statusIndex = avgScore > 70 ? 0 : avgScore > 50 ? 1 : 2;
 
@@ -362,7 +512,7 @@ export function DataProvider({ children }) {
 
         leaderboard.sort((a, b) => b.score - a.score);
         return leaderboard.map((l, i) => ({ ...l, rank: i + 1 }));
-    }, [sites]);
+    }, [sites, months, getSiteScoreDetails]);
 
     const getClusterLeaderboard = useCallback((monthStr) => {
         const fullLeaderboard = getLeaderboard(monthStr);
@@ -397,7 +547,7 @@ export function DataProvider({ children }) {
         });
 
         const cLeaderboard = Object.values(clusterMap).map(c => {
-            const score = Math.round(c.totalScore / c.count);
+            const score = parseFloat((c.totalScore / c.count).toFixed(1));
             const statuses = ['Excellent', 'Good', 'Needs Improvement'];
             const statusIndex = score > 75 ? 0 : score > 60 ? 1 : 2;
 
@@ -409,20 +559,20 @@ export function DataProvider({ children }) {
                 cluster: c.cluster,
                 score,
                 siteNames: clusterSitesNames,
-                totalPositive: Math.round(c.totalPositive / c.count),
-                totalNegative: Math.round(c.totalNegative / c.count),
-                change: Math.round(c.totalChange / c.count),
+                totalPositive: parseFloat((c.totalPositive / c.count).toFixed(1)),
+                totalNegative: parseFloat((c.totalNegative / c.count).toFixed(1)),
+                change: parseFloat((c.totalChange / c.count).toFixed(1)),
                 status: statuses[statusIndex],
                 history: Object.keys(c.historySums).map(m => ({
                     month: m,
-                    score: Math.round(c.historySums[m] / c.count)
+                    score: parseFloat((c.historySums[m] / c.count).toFixed(1))
                 }))
             };
         });
 
         cLeaderboard.sort((a, b) => b.score - a.score);
         return cLeaderboard.map((l, i) => ({ ...l, rank: i + 1 }));
-    }, [getLeaderboard]);
+    }, [getLeaderboard, sites]);
 
     return (
         <DataContext.Provider value={{

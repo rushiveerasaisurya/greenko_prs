@@ -7,11 +7,11 @@ import { toast } from '@/hooks/use-toast';
 
 export default function SubmitEvidence() {
   const { user } = useAuth();
-  const { submissions, addSubmission, scoringElements } = useData();
+  const { submissions, addSubmission, scoringElements, months } = useData();
   const [expanded, setExpanded] = useState(null);
   const [files, setFiles] = useState({});
   const [notes, setNotes] = useState({});
-  const [selectedMonth, setSelectedMonth] = useState('2026-03');
+  const [selectedMonth, setSelectedMonth] = useState(months[months.length - 1]);
 
   const elements = (scoringElements || []).filter(e => e.active && e.number <= 8);
 
@@ -61,7 +61,9 @@ export default function SubmitEvidence() {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-display text-xl font-bold">Submit Evidence</h2>
-        <input type="month" value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="px-3 py-1.5 rounded-lg border border-input bg-background text-sm font-medium" />
+        <select value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)} className="px-3 py-1.5 rounded-lg border border-input bg-background text-sm font-medium focus:ring-2 focus:ring-primary/20 outline-none">
+          {months.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
       </div>
       <div className="space-y-3">
         {elements.map(el => {
@@ -130,6 +132,44 @@ export default function SubmitEvidence() {
           );
         })}
       </div>
+
+      {/* My Submissions Tracking Table */}
+      {(() => {
+        const mySubmissions = (submissions || []).filter(s => s.site === user?.site && s.month === selectedMonth);
+        if (mySubmissions.length === 0) return null;
+        return (
+          <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border">
+              <h3 className="font-display font-bold text-foreground">My Submissions — {selectedMonth}</h3>
+              <p className="text-xs text-muted-foreground mt-1">{mySubmissions.length} submission(s) tracked</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-primary text-primary-foreground">
+                  <th className="px-3 py-2 text-left">Element</th>
+                  <th className="px-3 py-2 text-left">Sub-element</th>
+                  <th className="px-3 py-2 text-center">Files</th>
+                  <th className="px-3 py-2 text-left">Submitted</th>
+                  <th className="px-3 py-2 text-center">Status</th>
+                  <th className="px-3 py-2 text-right">Marks</th>
+                  <th className="px-3 py-2 text-left">Remarks</th>
+                </tr></thead>
+                <tbody>{mySubmissions.map((s, i) => (
+                  <tr key={s.id} className={`${i % 2 === 0 ? 'bg-background' : 'bg-card'} hover:bg-muted/30 transition-colors`}>
+                    <td className="px-3 py-2 font-medium text-xs">{s.element}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{s.subElement}</td>
+                    <td className="px-3 py-2 text-center text-xs">📎 {s.filesCount}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground">{s.date}</td>
+                    <td className="px-3 py-2 text-center">{statusBadge(s.status)}</td>
+                    <td className="px-3 py-2 text-right text-score font-bold text-primary">{s.marksAwarded != null ? s.marksAwarded : '—'}</td>
+                    <td className="px-3 py-2 text-xs text-muted-foreground max-w-[200px] truncate">{s.remarks || s.rejectionReason || '—'}</td>
+                  </tr>
+                ))}</tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })()}
     </motion.div>
   );
 }

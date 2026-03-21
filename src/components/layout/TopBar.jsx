@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, ChevronDown } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 
 const pathLabels = {
@@ -9,9 +9,8 @@ const pathLabels = {
   '/dashboard/ho/sites': 'Site Management',
   '/dashboard/ho/clusters': 'Cluster Management',
   '/dashboard/ho/users': 'User Management',
-  '/dashboard/ho/reports': 'Reports & Analytics',
   '/dashboard/ho/scoring': 'Scoring Configuration',
-  '/dashboard/ho/quarters': 'Quarter Management',
+  '/dashboard/ho/incidents': 'Log Negative Incident',
   '/dashboard/cluster': 'Dashboard',
   '/dashboard/cluster/validation': 'Evidence Validation',
   '/dashboard/cluster/quizzes': 'Quiz & Exam Builder',
@@ -26,13 +25,30 @@ const pathLabels = {
 };
 
 export default function TopBar({ onMenuClick }) {
-  const { user } = useAuth();
+  const { user, switchRole } = useAuth();
   const { notifications: mockNotifications } = useData();
   const location = useLocation();
   const [showNotifs, setShowNotifs] = useState(false);
-  const unreadCount = mockNotifications ? mockNotifications.filter(n => !n.read).length : 0;
+  const [showRoleMenu, setShowRoleMenu] = useState(false);
+  
+  const roleLabelMap = { HEAD_OFFICE: 'HO', CLUSTER_HEAD: 'Cluster', CLUSTER_SAFETY_OFFICER: 'Cluster Safety Officer', SITE_HEAD: 'Site' };
+  const roles = user?.roles || (user?.role ? [user.role] : []);
+  const activeRole = user?.activeRole || roles[0] || 'SITE_HEAD';
+  const roleLabel = roleLabelMap[activeRole] || 'Site';
+
+  const filteredNotifications = mockNotifications.filter(n => {
+    if (activeRole === 'HEAD_OFFICE') return true;
+    if (activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER') {
+      return n.targetCluster === user?.cluster;
+    }
+    if (activeRole === 'SITE_HEAD') {
+      return n.targetSite === user?.site;
+    }
+    return false;
+  });
+
+  const unreadCount = filteredNotifications.filter(n => !n.read).length;
   const currentPage = pathLabels[location.pathname] || 'Page';
-  const roleLabel = user?.role === 'HEAD_OFFICE' ? 'HO' : user?.role === 'CLUSTER_HEAD' ? 'Cluster' : 'Site';
 
   return (
     <header className="flex items-center justify-between px-4 md:px-6 h-14 bg-card border-b border-border shadow-sm relative">
@@ -41,18 +57,42 @@ export default function TopBar({ onMenuClick }) {
           <Menu className="w-5 h-5 text-foreground" />
         </button>
         <div className="flex items-center gap-1.5 text-sm">
-          <span className="text-muted-foreground">{roleLabel}</span>
+          <div className="relative">
+            <button 
+              onClick={() => roles.length > 1 && setShowRoleMenu(!showRoleMenu)}
+              className={`flex items-center gap-1.5 text-muted-foreground ${roles.length > 1 ? 'hover:text-foreground cursor-pointer' : ''}`}
+            >
+              <span>{roleLabel}</span>
+              {roles.length > 1 && <ChevronDown className="w-3 h-3" />}
+            </button>
+            {showRoleMenu && roles.length > 1 && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowRoleMenu(false)} />
+                <div className="absolute left-0 top-full mt-1 w-40 bg-card rounded-lg shadow-lg border border-border z-50 overflow-hidden">
+                  <div className="px-3 py-2 border-b border-border font-semibold text-xs text-muted-foreground bg-muted/30">Switch Role</div>
+                  {roles.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        switchRole(r);
+                        setShowRoleMenu(false);
+                        window.location.href = '/dashboard/' + (r === 'HEAD_OFFICE' ? 'ho' : r === 'CLUSTER_HEAD' || r === 'CLUSTER_SAFETY_OFFICER' ? 'cluster' : 'site');
+                      }}
+                      className={`w-full text-left px-3 py-2 text-xs hover:bg-muted ${activeRole === r ? 'text-primary font-bold bg-primary/5' : 'text-foreground'}`}
+                    >
+                      {roleLabelMap[r]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <span className="text-muted-foreground">›</span>
           <span className="font-semibold text-foreground font-display">{currentPage}</span>
         </div>
       </div>
 
       <div className="flex items-center gap-2">
-        <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success/10 text-success text-[11px] font-semibold">
-          <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse-live" />
-          Q3 FY2025-26
-        </span>
-
         <div className="relative">
           <button className="p-2 rounded-md hover:bg-muted relative" onClick={() => setShowNotifs(!showNotifs)}>
             <Bell className="w-5 h-5 text-muted-foreground" />
@@ -67,13 +107,17 @@ export default function TopBar({ onMenuClick }) {
               <div className="fixed inset-0 z-40" onClick={() => setShowNotifs(false)} />
               <div className="absolute right-0 top-full mt-1 w-80 bg-card rounded-lg shadow-lg border border-border z-50 max-h-96 overflow-y-auto">
                 <div className="px-4 py-3 border-b border-border font-display font-semibold text-sm">Notifications</div>
-                {mockNotifications.slice(0, 8).map(n => (
-                  <div key={n.id} className={`px-4 py-3 border-b border-border last:border-0 text-xs hover:bg-muted/50 ${!n.read ? 'bg-info/5' : ''}`}>
-                    <span className="mr-2">{n.icon}</span>
-                    <span className="text-foreground">{n.message}</span>
-                    <p className="text-muted-foreground mt-1 text-[10px]">{n.time}</p>
-                  </div>
-                ))}
+                {filteredNotifications.length === 0 ? (
+                  <div className="px-4 py-6 text-center text-xs text-muted-foreground">No new notifications</div>
+                ) : (
+                  filteredNotifications.slice(0, 8).map(n => (
+                    <div key={n.id} className={`px-4 py-3 border-b border-border last:border-0 text-xs hover:bg-muted/50 ${!n.read ? 'bg-info/5' : ''}`}>
+                      <span className="mr-2">{n.icon}</span>
+                      <span className="text-foreground">{n.message}</span>
+                      <p className="text-muted-foreground mt-1 text-[10px]">{n.time}</p>
+                    </div>
+                  ))
+                )}
               </div>
             </>
           )}

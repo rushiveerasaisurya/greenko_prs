@@ -12,7 +12,7 @@ const emptyQuiz = {
 
 export default function QuizBuilder() {
   const { user } = useAuth();
-  const { sites, quizzes: quizList, addQuiz, updateQuiz } = useData();
+  const { sites, quizzes: quizList, addQuiz, updateQuiz, scoringElements } = useData();
   const [editing, setEditing] = useState(null);
   const [step, setStep] = useState(1);
   const [preview, setPreview] = useState(null);

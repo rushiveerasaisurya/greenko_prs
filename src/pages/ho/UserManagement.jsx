@@ -4,8 +4,8 @@ import { Plus, Pencil, Ban, KeyRound, X, Trash2 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
 
-const emptyForm = { name: '', email: '', password: '', role: 'SITE_HEAD', cluster: '', site: '', status: 'Active' };
-const roleLabels = { HEAD_OFFICE: 'Head Office', CLUSTER_HEAD: 'Cluster Head', SITE_HEAD: 'Site Head' };
+const emptyForm = { name: '', email: '', password: '', roles: ['SITE_HEAD'], cluster: '', site: '', accessibleClusters: [], status: 'Active' };
+const roleLabels = { HEAD_OFFICE: 'Head Office', CLUSTER_HEAD: 'Cluster Head', CLUSTER_SAFETY_OFFICER: 'Cluster Safety Officer', SITE_HEAD: 'Site Head' };
 
 export default function UserManagement() {
   const { users, sites, clusters, addUser, updateUser, toggleUserStatus, deleteUser } = useData();
@@ -15,15 +15,28 @@ export default function UserManagement() {
   const [search, setSearch] = useState('');
 
   const openAdd = () => { setEditingId(null); setForm(emptyForm); setDrawerOpen(true); };
-  const openEdit = (u) => { setEditingId(u.id); setForm({ name: u.name, email: u.email, password: '', role: u.role, cluster: u.cluster || '', site: u.site || '', status: u.status }); setDrawerOpen(true); };
+  const openEdit = (u) => { setEditingId(u.id); setForm({ name: u.name, email: u.email, password: '', roles: u.roles || [], cluster: u.cluster || '', site: u.site || '', accessibleClusters: u.accessibleClusters || [], status: u.status }); setDrawerOpen(true); };
 
   const handleSave = () => {
     if (!form.name || !form.email) { toast({ title: 'Name and Email are required', variant: 'destructive' }); return; }
+    if (form.roles.length === 0) { toast({ title: 'At least one role is required', variant: 'destructive' }); return; }
+    
+    // Auto-resolve cluster from selected site for SITE_HEAD
+    let resolvedCluster = form.cluster || null;
+    if (form.roles.includes('SITE_HEAD') && form.site) {
+      const matchedSite = sites.find(s => s.name === form.site);
+      if (matchedSite) resolvedCluster = matchedSite.cluster;
+    }
+    
+    // Only save cluster/site if role implies it
+    if (!form.roles.includes('CLUSTER_HEAD') && !form.roles.includes('SITE_HEAD')) resolvedCluster = null;
+    let resolvedSite = form.roles.includes('SITE_HEAD') ? (form.site || null) : null;
+
     if (editingId) {
-      updateUser(editingId, { name: form.name, email: form.email, role: form.role, cluster: form.cluster || null, site: form.site || null, status: form.status });
+      updateUser(editingId, { name: form.name, email: form.email, roles: form.roles, cluster: resolvedCluster, site: resolvedSite, accessibleClusters: form.roles.includes('CLUSTER_SAFETY_OFFICER') ? form.accessibleClusters : [], status: form.status });
       toast({ title: 'User updated ✓' });
     } else {
-      addUser({ name: form.name, email: form.email, password: form.password || 'password', role: form.role, cluster: form.cluster || null, site: form.site || null, status: form.status });
+      addUser({ name: form.name, email: form.email, password: form.password || 'password', roles: form.roles, cluster: resolvedCluster, site: resolvedSite, accessibleClusters: form.roles.includes('CLUSTER_SAFETY_OFFICER') ? form.accessibleClusters : [], status: form.status });
       toast({ title: 'User created ✓' });
     }
     setDrawerOpen(false);
@@ -49,7 +62,7 @@ export default function UserManagement() {
   const filtered = users.filter(u =>
     u.name.toLowerCase().includes(search.toLowerCase()) ||
     u.email.toLowerCase().includes(search.toLowerCase()) ||
-    (u.role && roleLabels[u.role]?.toLowerCase().includes(search.toLowerCase()))
+    (u.roles?.some(r => roleLabels[r]?.toLowerCase().includes(search.toLowerCase())))
   );
 
   return (
@@ -70,7 +83,13 @@ export default function UserManagement() {
             <tr key={u.id} className={i % 2 === 0 ? 'bg-background' : 'bg-card'}>
               <td className="px-4 py-3 font-medium">{u.name}</td>
               <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
-              <td className="px-4 py-3"><span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/15 text-secondary">{roleLabels[u.role] || u.role}</span></td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-1">
+                  {u.roles?.map(r => (
+                    <span key={r} className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-secondary/15 text-secondary whitespace-nowrap">{roleLabels[r] || r}</span>
+                  ))}
+                </div>
+              </td>
               <td className="px-4 py-3 text-muted-foreground">{u.site || u.cluster || '—'}</td>
               <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${u.status === 'Active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{u.status}</span></td>
               <td className="px-4 py-3 text-muted-foreground text-xs">{u.lastLogin}</td>
@@ -95,9 +114,30 @@ export default function UserManagement() {
             <div><label className="text-xs font-semibold text-muted-foreground">Full Name *</label><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
             <div><label className="text-xs font-semibold text-muted-foreground">Email *</label><input value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>
             {!editingId && <div><label className="text-xs font-semibold text-muted-foreground">Temporary Password</label><input type="password" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" /></div>}
-            <div><label className="text-xs font-semibold text-muted-foreground">Role</label><select value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="HEAD_OFFICE">Head Office</option><option value="CLUSTER_HEAD">Cluster Head</option><option value="SITE_HEAD">Site Head</option></select></div>
-            {form.role === 'CLUSTER_HEAD' && <div><label className="text-xs font-semibold text-muted-foreground">Cluster</label><select value={form.cluster} onChange={e => setForm({ ...form, cluster: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select</option>{clusters.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div>}
-            {form.role === 'SITE_HEAD' && <div><label className="text-xs font-semibold text-muted-foreground">Site</label><select value={form.site} onChange={e => setForm({ ...form, site: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select</option>{sites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>}
+            
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground block mb-2">Roles</label>
+              <div className="flex flex-wrap gap-2 text-sm">
+                {Object.entries(roleLabels).map(([val, label]) => (
+                  <label key={val} className="flex items-center gap-1.5 cursor-pointer px-3 py-1.5 rounded-lg border border-input bg-background transition hover:bg-muted">
+                    <input 
+                      type="checkbox" 
+                      className="rounded text-primary border-input focus:ring-primary h-4 w-4"
+                      checked={form.roles.includes(val)}
+                      onChange={e => {
+                        if (e.target.checked) setForm({ ...form, roles: [...form.roles, val] });
+                        else setForm({ ...form, roles: form.roles.filter(r => r !== val) });
+                      }}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {form.roles.includes('CLUSTER_SAFETY_OFFICER') && <div><label className="text-xs font-semibold text-muted-foreground block mb-2">Accessible Clusters</label><div className="flex flex-wrap gap-2">{clusters.map(c => <label key={c.id} className="flex items-center gap-1.5 text-sm cursor-pointer"><input type="checkbox" checked={form.accessibleClusters.includes(c.name)} onChange={e => { if (e.target.checked) setForm({ ...form, accessibleClusters: [...form.accessibleClusters, c.name] }); else setForm({ ...form, accessibleClusters: form.accessibleClusters.filter(ac => ac !== c.name) }); }} className="rounded border-input text-primary focus:ring-primary h-4 w-4" /> {c.name}</label>)}</div></div>}
+            {form.roles.includes('CLUSTER_HEAD') && <div><label className="text-xs font-semibold text-muted-foreground">Cluster Assignment</label><select value={form.cluster} onChange={e => setForm({ ...form, cluster: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select Cluster</option>{clusters.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}</select></div>}
+            {form.roles.includes('SITE_HEAD') && <div><label className="text-xs font-semibold text-muted-foreground">Site Assignment</label><select value={form.site} onChange={e => setForm({ ...form, site: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="">Select Site</option>{sites.map(s => <option key={s.id} value={s.name}>{s.name}</option>)}</select></div>}
             <div><label className="text-xs font-semibold text-muted-foreground">Status</label><select value={form.status} onChange={e => setForm({ ...form, status: e.target.value })} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm"><option value="Active">Active</option><option value="Inactive">Inactive</option></select></div>
             <div className="flex gap-3 pt-4">
               <button onClick={handleSave} className="flex-1 py-2.5 bg-success text-success-foreground rounded-lg font-semibold text-sm">{editingId ? 'Update User' : 'Create User'}</button>

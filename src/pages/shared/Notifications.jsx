@@ -1,14 +1,33 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useData } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Notifications() {
-  const { notifications: notifs, markNotificationRead } = useData();
+  const { user } = useAuth();
+  const { notifications: allNotifs, markNotificationRead } = useData();
   const [tab, setTab] = useState('all');
 
-  const markAllRead = () => notifs.forEach(n => markNotificationRead(n.id));
+  const activeRole = user?.activeRole || (user?.roles ? user.roles[0] : user?.role);
+  
+  const scopedNotifs = allNotifs.filter(n => {
+    if (activeRole === 'HEAD_OFFICE') return true;
+    if (activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER') {
+      return n.targetCluster === user?.cluster;
+    }
+    if (activeRole === 'SITE_HEAD') {
+      return n.targetSite === user?.site;
+    }
+    return false;
+  });
 
-  const filtered = tab === 'unread' ? notifs.filter(n => !n.read) : tab === 'important' ? notifs.filter(n => n.type === 'warning' || n.type === 'error') : notifs;
+  const markAllRead = () => scopedNotifs.forEach(n => markNotificationRead(n.id));
+
+  const filtered = tab === 'unread' 
+    ? scopedNotifs.filter(n => !n.read) 
+    : tab === 'important' 
+      ? scopedNotifs.filter(n => n.type === 'warning' || n.type === 'error') 
+      : scopedNotifs;
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -19,7 +38,7 @@ export default function Notifications() {
       <div className="flex gap-2">
         {(['all', 'unread', 'important']).map(t => (
           <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-semibold capitalize transition ${tab === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-            {t} {t === 'unread' && `(${notifs.filter(n => !n.read).length})`}
+            {t} {t === 'unread' && `(${scopedNotifs.filter(n => !n.read).length})`}
           </button>
         ))}
       </div>

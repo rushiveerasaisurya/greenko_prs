@@ -15,7 +15,8 @@ export default function Leaderboard() {
   const [startMonth, setStartMonth] = useState(months[months.length - 3]);
   const [endMonth, setEndMonth] = useState(months[months.length - 1]);
   const [fyYear, setFyYear] = useState('2025-26');
-  const isHOorCluster = user?.role === 'HEAD_OFFICE' || user?.role === 'CLUSTER_HEAD';
+  const activeRole = user?.activeRole || user?.roles?.[0] || user?.role || 'SITE_HEAD';
+  const isHOorCluster = activeRole === 'HEAD_OFFICE' || activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER';
 
   let data = getLeaderboard(selectedMonth);
   if (tab === 'fy') {
