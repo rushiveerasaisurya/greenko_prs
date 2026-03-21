@@ -1,0 +1,42 @@
+﻿
+> snuggle-proof@0.0.0 lint
+> eslint .
+
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\NavLink.jsx
+  5:65  error  Parsing error: Unexpected token >
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\badge.jsx
+  27:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\button.jsx
+  44:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\form.jsx
+  110:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\navigation-menu.jsx
+  93:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\sidebar.jsx
+  589:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\sonner.jsx
+  25:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\components\ui\toggle.jsx
+  34:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\contexts\AuthContext.jsx
+  42:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\Admin\OneDrive\Desktop\snuggle-proof-proto-main\src\contexts\DataContext.jsx
+   34:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                       react-refresh/only-export-components
+  267:8   warning  React Hook useCallback has a missing dependency: 'getSiteScore'. Either include it or remove the dependency array. Outer scope values like 'months' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+  315:8   warning  React Hook useCallback has a missing dependency: 'getSiteScore'. Either include it or remove the dependency array                                                                                                                    react-hooks/exhaustive-deps
+  365:8   warning  React Hook useCallback has a missing dependency: 'getSiteScore'. Either include it or remove the dependency array                                                                                                                    react-hooks/exhaustive-deps
+  425:8   warning  React Hook useCallback has a missing dependency: 'sites'. Either include it or remove the dependency array                                                                                                                           react-hooks/exhaustive-deps
+  444:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                       react-refresh/only-export-components
+
+Γ£û 15 problems (1 error, 14 warnings)
+
