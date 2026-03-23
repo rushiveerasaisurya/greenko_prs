@@ -59,7 +59,7 @@ export default function EvidenceValidation() {
           <div key={s.id} className="bg-card rounded-xl border border-border p-4 shadow-sm hover:-translate-y-0.5 transition-transform">
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-bold text-secondary">🏭 {s.site}</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'PENDING' ? 'bg-warning/15 text-warning-foreground' : s.status === 'APPROVED' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{s.status}</span>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'PENDING' ? 'bg-warning/15 text-warning' : s.status === 'APPROVED' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{s.status}</span>
             </div>
             <p className="text-xs text-muted-foreground">Element {s.elementNumber} › {s.subElement}</p>
             <p className="text-sm font-medium mt-1">{s.element}</p>

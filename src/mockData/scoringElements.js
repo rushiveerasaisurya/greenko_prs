@@ -54,8 +54,9 @@ export const scoringElements = [
   },
   {
     id: '7', number: 7, name: 'Adoption of Best Practices & Continuous Improvement', maxMarks: 10, type: 'Leading', weightage: 10, active: true, subElements: [
-      { id: '7a', description: 'Best practices implemented', benchmark: '≥2 new practices/quarter', maxMarks: 5, active: true },
-      { id: '7b', description: 'Improvement suggestions acted on', benchmark: '≥50% acted upon', maxMarks: 5, active: true },
+      { id: '7a', description: 'Every month one new initiative from DSO, EO, Zonal, Sub-zonal and Cluster in-charge per month.', benchmark: '1 initiative/month', maxMarks: 5, active: true },
+      { id: '7b', description: 'Every month appreciation to DSO, EO and other for their contribution and support safety culture from cluster / zonal / sub-zonal in-charge.', benchmark: 'Monthly appreciation', maxMarks: 2.5, active: true },
+      { id: '7c', description: 'Adopting of new technology based on the update from National and International forums.', benchmark: 'Technology adoption', maxMarks: 2.5, active: true },
     ]
   },
   {

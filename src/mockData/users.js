@@ -1,6 +1,6 @@
 export const users = [
   { id: '1', name: 'HO Admin', email: 'ho@greenko.com', password: 'password', roles: ['HEAD_OFFICE'], status: 'Active', avatar: 'HA' },
-  { id: '2', name: 'Pedda Pullayya', email: 'pedda@greenko.com', password: 'password', roles: ['CLUSTER_SAFETY_OFFICER'], accessibleClusters: ['TS - Pardhasaradhi', 'TS - Yesubabu', 'TS - Jagadeesh', 'TS - Bala Ravikanth'], status: 'Active', avatar: 'PP' },
+  { id: '2', name: 'Pedda Pullayya', email: 'pullayya@greenko.com', password: 'password', roles: ['CLUSTER_SAFETY_OFFICER'], accessibleClusters: ['TS - Pardhasaradhi', 'TS - Yesubabu', 'TS - Jagadeesh', 'TS - Bala Ravikanth'], status: 'Active', avatar: 'PP' },
   { id: '3', name: 'REMIJIOUS', email: 'remijious@greenko.com', password: 'password', roles: ['CLUSTER_SAFETY_OFFICER'], accessibleClusters: ['TS - Jagadeesh', 'TS - Sravan'], status: 'Active', avatar: 'R' },
   { id: '4', name: 'Pardhasaradhi', email: 'pardhasaradhi@greenko.com', password: 'password', roles: ['CLUSTER_HEAD', 'SITE_HEAD'], cluster: 'TS - Pardhasaradhi', site: 'TS_DOM/Sunborne', status: 'Active', avatar: 'P' },
   { id: '5', name: 'Mr. Yesubabu. P', email: 'yesubabu@greenko.com', password: 'password', roles: ['CLUSTER_HEAD', 'SITE_HEAD'], cluster: 'TS - Yesubabu', site: 'TS_MV-REG', status: 'Active', avatar: 'YP' },

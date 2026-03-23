@@ -5,10 +5,10 @@ import { clusters as defaultClusters } from '@/mockData/clusters';
 import { evidenceSubmissions as defaultSubmissions } from '@/mockData/evidenceSubmissions';
 import { tickets as defaultTickets } from '@/mockData/tickets';
 import { notifications as defaultNotifications } from '@/mockData/notifications';
-import { quizzes as defaultQuizzes } from '@/mockData/quizzes';
+
 import { scoringElements as defaultScoringElements } from '@/mockData/scoringElements';
 
-const KEYS = { users: 'sp_users_v2', sites: 'sp_sites_v2', clusters: 'sp_clusters_v2', submissions: 'sp_submissions_v2', tickets: 'sp_tickets_v2', notifications: 'sp_notifications_v2', quizzes: 'sp_quizzes_v2', scoring: 'sp_scoring_v2' };
+const KEYS = { users: 'sp_users_v2', sites: 'sp_sites_v2', clusters: 'sp_clusters_v2', submissions: 'sp_submissions_v2', tickets: 'sp_tickets_v2', notifications: 'sp_notifications_v2', scoring: 'sp_scoring_v2' };
 
 function load(key, fallback) {
     try {
@@ -48,7 +48,7 @@ export function DataProvider({ children }) {
     const [submissions, setSubmissions] = useState(() => load(KEYS.submissions, defaultSubmissions));
     const [tickets, setTickets] = useState(() => load(KEYS.tickets, defaultTickets));
     const [notifications, setNotifications] = useState(() => load(KEYS.notifications, defaultNotifications));
-    const [quizzes, setQuizzes] = useState(() => load(KEYS.quizzes, defaultQuizzes));
+
     const [scoringElements, setScoringElements] = useState(() => load(KEYS.scoring, defaultScoringElements));
 
     // Persist on every change
@@ -58,7 +58,7 @@ export function DataProvider({ children }) {
     useEffect(() => { save(KEYS.submissions, submissions); }, [submissions]);
     useEffect(() => { save(KEYS.tickets, tickets); }, [tickets]);
     useEffect(() => { save(KEYS.notifications, notifications); }, [notifications]);
-    useEffect(() => { save(KEYS.quizzes, quizzes); }, [quizzes]);
+
     useEffect(() => { save(KEYS.scoring, scoringElements); }, [scoringElements]);
 
     // --- Notifications ---
@@ -258,7 +258,7 @@ export function DataProvider({ children }) {
         setSubmissions(defaultSubmissions);
         setTickets(defaultTickets);
         setNotifications(defaultNotifications);
-        setQuizzes(defaultQuizzes);
+
         setScoringElements(defaultScoringElements);
     }, []);
 
@@ -292,18 +292,7 @@ export function DataProvider({ children }) {
 
 
 
-    // --- Quizzes ---
-    const addQuiz = useCallback((quiz) => {
-        setQuizzes(prev => [...prev, { ...quiz, id: String(Date.now()) }]);
-    }, []);
 
-    const updateQuiz = useCallback((id, updates) => {
-        setQuizzes(prev => prev.map(q => q.id === id ? { ...q, ...updates } : q));
-    }, []);
-
-    const deleteQuiz = useCallback((id) => {
-        setQuizzes(prev => prev.filter(q => q.id !== id));
-    }, []);
 
     // --- Scoring Configuration ---
     const updateScoringElement = useCallback((id, updates) => {
@@ -321,7 +310,7 @@ export function DataProvider({ children }) {
         let totalWeightedScore = 0;
         let totalWeight = 0;
 
-        // Elements 1-8 (Positive)
+        // Elements 1-8 (Positive) — all approved marks count
         activeElements.filter(e => e.number <= 8).forEach(el => {
             const subs = submissions.filter(s => s.site === siteName && s.elementNumber === el.number && s.month === monthStr);
             const awarded = subs.filter(s => s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
@@ -341,7 +330,6 @@ export function DataProvider({ children }) {
             totalNegative = incidents.reduce((a, s) => a + Math.abs(s.marksAwarded || 0), 0);
         }
 
-        // Allow scores to drop below 0
         const score = totalPositive - totalNegative;
 
         return {
@@ -576,15 +564,15 @@ export function DataProvider({ children }) {
 
     return (
         <DataContext.Provider value={{
-            users, sites, clusters, months, submissions, tickets, notifications, quizzes,
+            users, sites, clusters, months, submissions, tickets, notifications,
             addUser, updateUser, toggleUserStatus, deleteUser,
             addSite, updateSite, toggleSiteStatus, deleteSite,
             addCluster, updateCluster, deleteCluster,
             addSubmission, updateSubmission, deleteSubmission,
             addTicket, updateTicket, addNotification, markNotificationRead, deleteNotification,
-            addQuiz, updateQuiz, deleteQuiz,
+
             scoringElements, updateScoringElement, resetScoringElements,
-            resetData, getLeaderboard, getFYLeaderboard, getClusterLeaderboard, getPeriodLeaderboard,
+            resetData, getLeaderboard, getFYLeaderboard, getClusterLeaderboard, getPeriodLeaderboard, getSiteScoreDetails,
         }}>
             {children}
         </DataContext.Provider>

@@ -20,14 +20,14 @@ import ScoringConfig from "./pages/ho/ScoringConfig";
 // Cluster pages
 import ClusterDashboard from "./pages/cluster/Dashboard";
 import EvidenceValidation from "./pages/cluster/EvidenceValidation";
-import QuizBuilder from "./pages/cluster/QuizBuilder";
+
 import AuditReports from "./pages/cluster/AuditReports";
 import IncidentReporting from "./pages/cluster/IncidentReporting";
 
 // Site pages
 import SiteDashboard from "./pages/site/Dashboard";
 import SubmitEvidence from "./pages/site/SubmitEvidence";
-import SiteQuizzes from "./pages/site/Quizzes";
+
 import SitePerformance from "./pages/site/Performance";
 
 // Shared pages
@@ -79,6 +79,8 @@ const App = () => {
                 <Route element={<PrivateRoute><AppShell /></PrivateRoute>}>
                   {/* HO */}
                   <Route path="/dashboard/ho" element={<HODashboard />} />
+                  <Route path="/dashboard/ho/site/:siteId" element={<SiteDashboard />} />
+                  <Route path="/dashboard/ho/cluster/:clusterId" element={<ClusterDashboard />} />
                   <Route path="/dashboard/ho/sites" element={<SiteManagement />} />
                   <Route path="/dashboard/ho/clusters" element={<ClusterManagement />} />
                   <Route path="/dashboard/ho/users" element={<UserManagement />} />
@@ -86,14 +88,16 @@ const App = () => {
                   <Route path="/dashboard/ho/incidents" element={<IncidentReporting />} />
                   {/* Cluster */}
                   <Route path="/dashboard/cluster" element={<ClusterDashboard />} />
+                  <Route path="/dashboard/cluster/site/:siteId" element={<SiteDashboard />} />
+                  <Route path="/dashboard/cluster/cluster/:clusterId" element={<ClusterDashboard />} />
                   <Route path="/dashboard/cluster/validation" element={<EvidenceValidation />} />
-                  <Route path="/dashboard/cluster/quizzes" element={<QuizBuilder />} />
+
                   <Route path="/dashboard/cluster/audits" element={<AuditReports />} />
                   <Route path="/dashboard/cluster/incidents" element={<IncidentReporting />} />
                   {/* Site */}
                   <Route path="/dashboard/site" element={<SiteDashboard />} />
                   <Route path="/dashboard/site/evidence" element={<SubmitEvidence />} />
-                  <Route path="/dashboard/site/quizzes" element={<SiteQuizzes />} />
+
                   <Route path="/dashboard/site/performance" element={<SitePerformance />} />
                   {/* Shared */}
                   <Route path="/leaderboard" element={<Leaderboard />} />

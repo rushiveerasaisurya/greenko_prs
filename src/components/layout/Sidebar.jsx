@@ -2,7 +2,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Factory, FolderTree, Users, Trophy, BarChart3,
-  Settings, Calendar, Ticket, Bell, ClipboardCheck, FileQuestion,
+  Settings, Calendar, Ticket, Bell, ClipboardCheck,
   ClipboardList, FileUp, TrendingUp, Shield, ChevronLeft, ChevronRight,
   LogOut, X, AlertTriangle
 } from 'lucide-react';
@@ -16,13 +16,12 @@ const navConfig = {
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/dashboard/ho/scoring', label: 'Scoring Config', icon: Settings },
     { path: '/dashboard/ho/incidents', label: 'Incident Reporting', icon: AlertTriangle },
-    { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/notifications', label: 'Notifications', icon: Bell },
   ],
   CLUSTER_HEAD: [
     { path: '/dashboard/cluster', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/dashboard/cluster/validation', label: 'Evidence Validation', icon: ClipboardCheck },
-    { path: '/dashboard/cluster/quizzes', label: 'Quiz & Exam Builder', icon: FileQuestion },
+
     { path: '/leaderboard', label: 'Cluster Leaderboard', icon: Trophy },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/dashboard/cluster/audits', label: 'Audit Reports', icon: ClipboardList },
@@ -32,7 +31,7 @@ const navConfig = {
   CLUSTER_SAFETY_OFFICER: [
     { path: '/dashboard/cluster', label: 'Dashboard', icon: LayoutDashboard },
     { path: '/dashboard/cluster/validation', label: 'Evidence Validation', icon: ClipboardCheck },
-    { path: '/dashboard/cluster/quizzes', label: 'Quiz & Exam Builder', icon: FileQuestion },
+
     { path: '/leaderboard', label: 'Cluster Leaderboard', icon: Trophy },
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/dashboard/cluster/audits', label: 'Audit Reports', icon: ClipboardList },
@@ -42,7 +41,7 @@ const navConfig = {
   SITE_HEAD: [
     { path: '/dashboard/site', label: 'My Dashboard', icon: LayoutDashboard },
     { path: '/dashboard/site/evidence', label: 'Submit Evidence', icon: FileUp },
-    { path: '/dashboard/site/quizzes', label: 'Quizzes & Exams', icon: FileQuestion },
+
     { path: '/tickets', label: 'Tickets', icon: Ticket },
     { path: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { path: '/dashboard/site/performance', label: 'My Performance', icon: TrendingUp },
@@ -73,15 +72,14 @@ export default function Sidebar({ collapsed, setCollapsed, mobileOpen, setMobile
         ${collapsed ? 'w-[60px]' : 'w-60'}
         ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        {/* Logo */}
         <div className="flex items-center gap-3 px-3 py-4 border-b border-sidebar-border">
           <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-sidebar-primary shrink-0">
             <Shield className="w-5 h-5 text-sidebar-primary-foreground" />
           </div>
           {!collapsed && (
             <div>
-              <h1 className="text-sm font-bold font-display leading-tight">GREENKO SSRS</h1>
-              <p className="text-[10px] opacity-70">Site Safety Ranking</p>
+              <h1 className="text-sm font-bold font-display leading-tight">GREENKO PRS</h1>
+              <p className="text-[10px] opacity-70">Plant Ranking System</p>
             </div>
           )}
           <button className="md:hidden ml-auto p-1" onClick={() => setMobileOpen(false)}>

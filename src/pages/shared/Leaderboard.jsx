@@ -4,19 +4,22 @@ import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { Download, CalendarDays } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Link } from 'react-router-dom';
 
 const scoreColor = (s) => s >= 80 ? 'text-success' : s >= 60 ? 'text-secondary' : s >= 40 ? 'text-accent' : 'text-destructive';
 
 export default function Leaderboard() {
   const { user } = useAuth();
   const { months, getLeaderboard, getFYLeaderboard, getClusterLeaderboard, getPeriodLeaderboard } = useData();
-  const [tab, setTab] = useState('current');
+  const activeRole = user?.activeRole || user?.roles?.[0] || user?.role || 'SITE_HEAD';
+  const isHOorCluster = activeRole === 'HEAD_OFFICE' || activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER';
+  const hasCluster = !!user?.cluster;
+  
+  const [tab, setTab] = useState(activeRole === 'SITE_HEAD' && hasCluster ? 'my_cluster' : 'current');
   const [selectedMonth, setSelectedMonth] = useState(months[months.length - 1]);
   const [startMonth, setStartMonth] = useState(months[months.length - 3]);
   const [endMonth, setEndMonth] = useState(months[months.length - 1]);
   const [fyYear, setFyYear] = useState('2025-26');
-  const activeRole = user?.activeRole || user?.roles?.[0] || user?.role || 'SITE_HEAD';
-  const isHOorCluster = activeRole === 'HEAD_OFFICE' || activeRole === 'CLUSTER_HEAD' || activeRole === 'CLUSTER_SAFETY_OFFICER';
 
   let data = getLeaderboard(selectedMonth);
   if (tab === 'fy') {
@@ -25,6 +28,9 @@ export default function Leaderboard() {
     data = getClusterLeaderboard(selectedMonth);
   } else if (tab === 'period') {
     data = getPeriodLeaderboard(startMonth, endMonth);
+  } else if (tab === 'my_cluster') {
+    data = data.filter(d => d.cluster === user?.cluster);
+    data.forEach((d, idx) => { d.rank = idx + 1; });
   }
 
   // Prepare chart data (Trend of Top 5 sites/clusters of selected month over history)
@@ -45,6 +51,8 @@ export default function Leaderboard() {
   }
   const colors = ['#059669', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899'];
 
+  const basePath = activeRole === 'HEAD_OFFICE' ? '/dashboard/ho' : isHOorCluster ? '/dashboard/cluster' : null;
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
@@ -59,14 +67,14 @@ export default function Leaderboard() {
 
       <div className="flex flex-col sm:flex-row justify-between gap-4">
         <div className="flex flex-wrap gap-2">
-          {(['current', 'fy', 'period', 'cluster']).map(t => (
+          {(hasCluster ? ['my_cluster', 'current', 'fy', 'period', 'cluster'] : ['current', 'fy', 'period', 'cluster']).map(t => (
             <button key={t} onClick={() => setTab(t)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${tab === t ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-              {t === 'current' ? 'HQ View' : t === 'fy' ? 'FY Cumulative' : t === 'period' ? 'Period View' : 'By Cluster'}
+              {t === 'my_cluster' ? 'My Cluster' : t === 'current' ? 'HQ View' : t === 'fy' ? 'FY Cumulative' : t === 'period' ? 'Period View' : 'By Cluster'}
             </button>
           ))}
         </div>
 
-        {tab === 'current' || tab === 'cluster' ? (
+        {tab === 'current' || tab === 'cluster' || tab === 'my_cluster' ? (
           <div className="flex items-center gap-2">
             <CalendarDays className="w-4 h-4 text-muted-foreground" />
             <select
@@ -148,7 +156,25 @@ export default function Leaderboard() {
           <tbody>{data.map((e, i) => (
             <tr key={e.rank} className={`${i % 2 === 0 ? 'bg-background' : 'bg-card'} ${(e.site === user?.site || (tab === 'cluster' && e.cluster === user?.cluster)) ? 'ring-2 ring-primary/30' : ''} transition`}>
               <td className="px-4 py-3 font-bold">{e.rank <= 3 ? ['🥇', '🥈', '🥉'][e.rank - 1] : e.rank}</td>
-              <td className="px-4 py-3 font-medium">{tab === 'cluster' ? e.cluster : e.site}</td>
+              <td className="px-4 py-3 font-medium">
+                {tab === 'cluster' ? (
+                  basePath ? (
+                    <Link to={`${basePath}/cluster/${encodeURIComponent(e.cluster)}?month=${encodeURIComponent(selectedMonth)}`} className="text-foreground hover:text-primary transition-colors block">
+                      {e.cluster}
+                    </Link>
+                  ) : (
+                    e.cluster
+                  )
+                ) : (
+                  basePath ? (
+                    <Link to={`${basePath}/site/${encodeURIComponent(e.site)}?month=${encodeURIComponent(selectedMonth)}`} className="text-foreground hover:text-primary transition-colors block">
+                      {e.site}
+                    </Link>
+                  ) : (
+                    e.site
+                  )
+                )}
+              </td>
               {tab !== 'cluster' && <td className="px-4 py-3 text-muted-foreground">{e.cluster}</td>}
               {tab === 'cluster' && (
                 <td className="px-4 py-3">
@@ -161,7 +187,7 @@ export default function Leaderboard() {
               )}
               <td className={`px-4 py-3 text-right text-score font-bold ${scoreColor(e.score)}`}>{e.score}</td>
               <td className="px-4 py-3 text-center">{e.change > 0 ? <span className="text-success font-semibold">↑{e.change}</span> : e.change < 0 ? <span className="text-destructive font-semibold">↓{Math.abs(e.change)}</span> : '—'}</td>
-              <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap font-bold ${e.status === 'Fully Submitted' || e.status === 'Excellent' ? 'bg-success/15 text-success' : e.status === 'Partial' || e.status === 'Good' ? 'bg-warning/15 text-warning-foreground' : 'bg-muted text-muted-foreground'}`}>{e.status}</span></td>
+              <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap font-bold ${e.status === 'Fully Submitted' || e.status === 'Excellent' ? 'bg-success/15 text-success' : e.status === 'Partial' || e.status === 'Good' ? 'bg-warning/15 text-warning' : 'bg-muted text-muted-foreground'}`}>{e.status}</span></td>
             </tr>
           ))}</tbody>
         </table>
@@ -173,10 +199,10 @@ export default function Leaderboard() {
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
-              <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))' }} />
-              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
+              <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }} />
+              <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--card-foreground))' }} />
+              <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: 'hsl(var(--foreground))' }} />
               {topSites.map((item, index) => (
                 <Line
                   key={item.id}

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp, Upload, X, FileText, Image, FileSpreadsheet, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Upload, X, FileText, Image, FileSpreadsheet, AlertCircle, Plus, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { toast } from '@/hooks/use-toast';
@@ -17,14 +17,15 @@ export default function SubmitEvidence() {
 
 
 
-  const getSubSubmission = (elementNum, subDesc) => {
-    return (submissions || []).find(s => s.site === user?.site && s.elementNumber === elementNum && s.subElement === subDesc && s.month === selectedMonth);
+  const getAllSubSubmissions = (elementNum, subDesc) => {
+    return (submissions || []).filter(s => s.site === user?.site && s.elementNumber === elementNum && s.subElement === subDesc && s.month === selectedMonth);
   };
 
   const handleFileAdd = (subId) => {
     const mockFiles = ['safety_report.pdf', 'site_photo.jpg', 'training_log.xlsx'];
     const randomFile = mockFiles[Math.floor(Math.random() * mockFiles.length)];
-    setFiles({ ...files, [subId]: [...(files[subId] || []), randomFile] });
+    // Only allow one file per submission — replaces any existing file
+    setFiles({ ...files, [subId]: [randomFile] });
   };
 
   const handleRemoveFile = (subId, idx) => {
@@ -33,7 +34,7 @@ export default function SubmitEvidence() {
 
   const handleSubmit = (elementNum, subElement, subId) => {
     const subFiles = files[subId] || [];
-    if (subFiles.length === 0) { toast({ title: 'Please upload at least 1 file', variant: 'destructive' }); return; }
+    if (subFiles.length === 0) { toast({ title: 'Please upload an evidence file', variant: 'destructive' }); return; }
     const newSub = {
       id: String(Date.now()), site: user?.site || '', element: scoringElements.find(e => e.number === elementNum)?.name || '',
       elementNumber: elementNum, subElement, submittedBy: user?.name || '', date: new Date().toISOString().slice(0, 16).replace('T', ' '),
@@ -52,7 +53,7 @@ export default function SubmitEvidence() {
   };
 
   const statusBadge = (status) => {
-    const map = { NOT_SUBMITTED: 'bg-muted text-muted-foreground', PENDING: 'bg-warning/15 text-warning-foreground', APPROVED: 'bg-success/15 text-success', REJECTED: 'bg-destructive/15 text-destructive' };
+    const map = { NOT_SUBMITTED: 'bg-muted text-muted-foreground', PENDING: 'bg-warning/15 text-warning', APPROVED: 'bg-success/15 text-success', REJECTED: 'bg-destructive/15 text-destructive' };
     const labels = { NOT_SUBMITTED: 'Not Submitted', PENDING: '⏳ Pending', APPROVED: '✓ Approved', REJECTED: '✗ Rejected' };
     return <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${map[status]}`}>{labels[status]}</span>;
   };
@@ -84,30 +85,63 @@ export default function SubmitEvidence() {
               {expanded === el.id && (
                 <div className="border-t border-border divide-y divide-border">
                   {el.subElements.map(se => {
-                    const existing = getSubSubmission(el.number, se.description);
-                    const status = existing?.status || 'NOT_SUBMITTED';
+                    const allSubs = getAllSubSubmissions(el.number, se.description);
+                    const latestSub = allSubs.length > 0 ? allSubs[allSubs.length - 1] : null;
+                    const latestStatus = latestSub?.status || 'NOT_SUBMITTED';
+                    const canSubmitNew = !latestSub || latestSub.status !== 'PENDING';
                     const subFiles = files[se.id] || [];
                     return (
                       <div key={se.id} className="p-4 space-y-3">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium">{se.description}</p>
-                          {statusBadge(status)}
+                          <div className="flex items-center gap-2">
+                            {allSubs.length > 0 && <span className="text-[10px] text-muted-foreground font-medium">{allSubs.length} response(s)</span>}
+                            {statusBadge(latestStatus)}
+                          </div>
                         </div>
                         <details className="text-xs"><summary className="text-info cursor-pointer font-semibold">Benchmark Guide</summary><div className="mt-1 p-2 rounded-lg bg-success/5 border border-success/20 text-success">{se.benchmark}</div></details>
 
-                        {status === 'REJECTED' && existing?.rejectionReason && (
-                          <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/5 border border-destructive/20 text-xs text-destructive">
-                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                            <div><p className="font-semibold">Rejected:</p><p>{existing.rejectionReason}</p></div>
+                        {/* Show all past submission responses */}
+                        {allSubs.length > 0 && (
+                          <div className="space-y-1.5">
+                            {allSubs.map((sub, idx) => (
+                              <div key={sub.id} className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs border ${
+                                sub.status === 'APPROVED' ? 'bg-success/5 border-success/20' :
+                                sub.status === 'REJECTED' ? 'bg-destructive/5 border-destructive/20' :
+                                'bg-warning/5 border-warning/20'
+                              }`}>
+                                <div className="flex items-center gap-2">
+                                  {sub.status === 'APPROVED' && <CheckCircle2 className="w-3.5 h-3.5 text-success" />}
+                                  {sub.status === 'REJECTED' && <XCircle className="w-3.5 h-3.5 text-destructive" />}
+                                  {sub.status === 'PENDING' && <Clock className="w-3.5 h-3.5 text-warning" />}
+                                  <span className="font-medium">Response {idx + 1}</span>
+                                  <span className="text-muted-foreground">📎 {sub.filesCount} file · {sub.date}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {sub.status === 'APPROVED' && <span className="text-success font-semibold">+{sub.marksAwarded} marks</span>}
+                                  {sub.status === 'REJECTED' && sub.rejectionReason && (
+                                    <span className="text-destructive max-w-[200px] truncate" title={sub.rejectionReason}>✗ {sub.rejectionReason}</span>
+                                  )}
+                                  {statusBadge(sub.status)}
+                                </div>
+                              </div>
+                            ))}
                           </div>
                         )}
 
-                        {(status === 'NOT_SUBMITTED' || status === 'REJECTED') && (
+                        {/* Show upload form when latest isn't PENDING */}
+                        {canSubmitNew && (
                           <>
+                            {allSubs.length > 0 && (
+                              <div className="flex items-center gap-1.5 text-xs text-primary font-semibold">
+                                <Plus className="w-3.5 h-3.5" />
+                                Submit another response
+                              </div>
+                            )}
                             <div onClick={() => handleFileAdd(se.id)} className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition">
                               <Upload className="w-6 h-6 mx-auto text-muted-foreground mb-1" />
                               <p className="text-xs text-muted-foreground">Drop PDF, Images, or Excel here — or click to browse</p>
-                              <p className="text-[10px] text-muted-foreground mt-1">Max: 20MB per file, 10 files total</p>
+                              <p className="text-[10px] text-muted-foreground mt-1">Max: 20MB per file · 1 file per submission</p>
                             </div>
                             {subFiles.length > 0 && (
                               <div className="space-y-1">{subFiles.map((f, fi) => (
@@ -120,8 +154,8 @@ export default function SubmitEvidence() {
                             <button onClick={() => handleSubmit(el.number, se.description, se.id)} disabled={subFiles.length === 0} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Submit for Validation</button>
                           </>
                         )}
-                        {status === 'APPROVED' && existing && (
-                          <div className="text-xs text-success font-semibold">✓ Marks awarded: {existing.marksAwarded} {existing.remarks && `— ${existing.remarks}`}</div>
+                        {latestStatus === 'PENDING' && (
+                          <p className="text-xs text-warning font-medium flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Awaiting cluster head review — you can submit another response after this is reviewed</p>
                         )}
                       </div>
                     );

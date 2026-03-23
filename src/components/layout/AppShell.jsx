@@ -8,7 +8,7 @@ export default function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden theme-transition">
       <Sidebar
         collapsed={collapsed}
         setCollapsed={setCollapsed}

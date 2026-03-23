@@ -72,7 +72,7 @@ export default function SiteManagement() {
             {filtered.map((s, i) => (
               <tr key={s.id} className={`${i % 2 === 0 ? 'bg-background' : 'bg-card'} hover:bg-muted/50 transition`}>
                 <td className="px-4 py-3 font-medium">{s.name}</td>
-                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.type === 'Solar' ? 'bg-warning/15 text-warning-foreground' : 'bg-info/15 text-info'}`}>{s.type}</span></td>
+                <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.type === 'Solar' ? 'bg-warning/15 text-warning' : 'bg-info/15 text-info'}`}>{s.type}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{s.cluster}</td>
                 <td className="px-4 py-3">{s.siteHead || '—'}</td>
                 <td className="px-4 py-3 text-right text-score">{s.capacity}</td>

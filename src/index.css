@@ -43,6 +43,43 @@
     --sidebar-ring: 0 0% 100%;
   }
 
+  .dark {
+    --background: 220 26% 10%;
+    --foreground: 210 40% 98%;
+    --card: 220 25% 14%;
+    --card-foreground: 210 40% 98%;
+    --popover: 220 25% 14%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 152 60% 52%;
+    --primary-foreground: 220 26% 10%;
+    --secondary: 172 66% 50%;
+    --secondary-foreground: 220 26% 10%;
+    --muted: 220 20% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 30 80% 60%;
+    --accent-foreground: 220 26% 10%;
+    --destructive: 0 72% 63%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 152 60% 52%;
+    --success-foreground: 220 26% 10%;
+    --info: 207 90% 61%;
+    --info-foreground: 220 26% 10%;
+    --warning: 45 93% 58%;
+    --warning-foreground: 220 26% 10%;
+    --border: 220 20% 22%;
+    --input: 220 20% 22%;
+    --ring: 152 60% 52%;
+
+    --sidebar-background: 220 30% 8%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 152 60% 52%;
+    --sidebar-primary-foreground: 220 26% 10%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 20% 16%;
+    --sidebar-ring: 152 60% 52%;
+  }
+
   * {
     @apply border-border;
   }
@@ -50,6 +87,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: 'Nunito', sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -71,11 +109,72 @@
     @apply font-bold;
   }
 
+  /* ===== ANIMATIONS ===== */
+
+  /* Fade-in-up for page and section loads */
+  @keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-in-up {
+    animation: fade-in-up 0.5s ease-out both;
+  }
+
+  /* Staggered card entrance */
+  @keyframes card-enter {
+    from { opacity: 0; transform: translateY(20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .animate-card-enter {
+    animation: card-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Subtle hover lift for cards */
+  .hover-lift {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px -6px rgba(0,0,0,0.12), 0 4px 10px -2px rgba(0,0,0,0.06);
+  }
+  .dark .hover-lift:hover {
+    box-shadow: 0 12px 28px -6px rgba(0,0,0,0.5), 0 0 20px -4px hsl(152 60% 52% / 0.08);
+  }
+
+  /* Shimmer gradient for loading states & decorative accents */
+  @keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 30%, hsl(var(--primary) / 0.08) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: shimmer 2.5s ease-in-out infinite;
+  }
+
+  /* Subtle glow pulse for important KPI numbers */
+  @keyframes glow-pulse {
+    0%, 100% { text-shadow: 0 0 0px transparent; }
+    50%      { text-shadow: 0 0 12px hsl(var(--primary) / 0.3); }
+  }
+  .animate-glow {
+    animation: glow-pulse 3s ease-in-out infinite;
+  }
+
+  /* Smooth border glow for active or focused elements */
+  @keyframes border-glow {
+    0%, 100% { box-shadow: 0 0 0px hsl(var(--primary) / 0); }
+    50%      { box-shadow: 0 0 16px hsl(var(--primary) / 0.15); }
+  }
+  .animate-border-glow {
+    animation: border-glow 2.5s ease-in-out infinite;
+  }
+
+  /* Original animations preserved */
   @keyframes pulse-live {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.4; }
   }
-
   .animate-pulse-live {
     animation: pulse-live 1.5s ease-in-out infinite;
   }
@@ -84,8 +183,38 @@
     0% { background-color: hsl(45 88% 50% / 0.3); }
     100% { background-color: transparent; }
   }
-
   .animate-flash {
     animation: flash-highlight 1.5s ease-out;
+  }
+
+  /* Slide-in from left for sidebar nav items */
+  @keyframes slide-in-left {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .animate-slide-in {
+    animation: slide-in-left 0.3s ease-out both;
+  }
+
+  /* Smooth scale for buttons and interactive elements */
+  .btn-press {
+    transition: transform 0.15s ease;
+  }
+  .btn-press:active {
+    transform: scale(0.96);
+  }
+
+  /* Row hover highlight for tables */
+  .row-hover {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+  .row-hover:hover {
+    background-color: hsl(var(--muted) / 0.5) !important;
+  }
+
+  /* Smooth theme transition for all elements */
+  .theme-transition,
+  .theme-transition * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
   }
 }

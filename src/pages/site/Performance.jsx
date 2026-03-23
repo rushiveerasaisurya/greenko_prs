@@ -41,9 +41,9 @@ export default function SitePerformance() {
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={elementScores}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-              <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v) => `${v}%`} />
+              <XAxis dataKey="name" tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: 'hsl(var(--foreground))' }} />
+              <Tooltip formatter={(v) => `${v}%`} contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--card-foreground))' }} />
               <Bar dataKey="pct" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
@@ -60,7 +60,7 @@ export default function SitePerformance() {
               <td className="px-4 py-2 text-right text-score">{e.max}</td>
               <td className="px-4 py-2 text-right text-score">{e.awarded}</td>
               <td className="px-4 py-2 text-right text-muted-foreground">{e.weight}%</td>
-              <td className="px-4 py-2 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${e.pct >= 80 ? 'bg-success/15 text-success' : e.pct >= 50 ? 'bg-warning/15 text-warning-foreground' : 'bg-destructive/15 text-destructive'}`}>{e.pct}%</span></td>
+              <td className="px-4 py-2 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${e.pct >= 80 ? 'bg-success/15 text-success' : e.pct >= 50 ? 'bg-warning/15 text-warning' : 'bg-destructive/15 text-destructive'}`}>{e.pct}%</span></td>
             </tr>
           ))}</tbody>
         </table>

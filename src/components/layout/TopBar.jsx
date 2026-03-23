@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Bell, Menu, ChevronDown } from 'lucide-react';
+import { Bell, Menu, ChevronDown, Sun, Moon } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 
 const pathLabels = {
@@ -13,11 +13,11 @@ const pathLabels = {
   '/dashboard/ho/incidents': 'Log Negative Incident',
   '/dashboard/cluster': 'Dashboard',
   '/dashboard/cluster/validation': 'Evidence Validation',
-  '/dashboard/cluster/quizzes': 'Quiz & Exam Builder',
+
   '/dashboard/cluster/audits': 'Audit Reports',
   '/dashboard/site': 'My Dashboard',
   '/dashboard/site/evidence': 'Submit Evidence',
-  '/dashboard/site/quizzes': 'Quizzes & Exams',
+
   '/dashboard/site/performance': 'My Performance',
   '/leaderboard': 'Leaderboard',
   '/tickets': 'Tickets',
@@ -35,6 +35,22 @@ export default function TopBar({ onMenuClick }) {
   const roles = user?.roles || (user?.role ? [user.role] : []);
   const activeRole = user?.activeRole || roles[0] || 'SITE_HEAD';
   const roleLabel = roleLabelMap[activeRole] || 'Site';
+
+  // Dark Mode Logic
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || 
+      (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
 
   const filteredNotifications = mockNotifications.filter(n => {
     if (activeRole === 'HEAD_OFFICE') return true;
@@ -93,6 +109,10 @@ export default function TopBar({ onMenuClick }) {
       </div>
 
       <div className="flex items-center gap-2">
+        <button onClick={() => setIsDark(!isDark)} className="p-2 mr-2 rounded-lg hover:bg-muted btn-press transition-all duration-300" title="Toggle theme">
+          {isDark ? <Sun className="w-5 h-5 text-warning transition-transform duration-500 rotate-0 hover:rotate-90" /> : <Moon className="w-5 h-5 text-muted-foreground transition-transform duration-500 rotate-0 hover:-rotate-12" />}
+        </button>
+
         <div className="relative">
           <button className="p-2 rounded-md hover:bg-muted relative" onClick={() => setShowNotifs(!showNotifs)}>
             <Bell className="w-5 h-5 text-muted-foreground" />
