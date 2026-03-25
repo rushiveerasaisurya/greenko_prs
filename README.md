@@ -1,4 +1,4 @@
-# Snuggle Proof — Safety Scoring & Reporting System
+# Greenko Plant Ranking System — Safety Scoring & Reporting System
 
 A role-based safety management dashboard built with **React**, **Vite**, **Tailwind CSS**, and **shadcn/ui**.
 
