@@ -56,8 +56,8 @@ export default function SiteDashboard() {
     const lb = getLeaderboard(m);
     const entry = lb.find(l => l.site === displaySite);
     return {
-      month: m.substring(0, 3), // short month name
-      score: entry?.score || 0
+      month: m.substring(0, 3), 
+      score: parseFloat((entry?.score || 0).toFixed(1))
     };
   });
 
@@ -126,6 +126,7 @@ export default function SiteDashboard() {
                 <RechartsTooltip 
                   contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--card-foreground))' }}
                   cursor={{ stroke: 'hsl(var(--muted-foreground))', strokeWidth: 1, strokeDasharray: '4 4' }}
+                  formatter={(val) => [val?.toFixed(1), 'Score']}
                 />
                 <Line type="monotone" dataKey="score" name="Score" stroke="hsl(var(--primary))" strokeWidth={3} dot={{ r: 4, fill: 'hsl(var(--primary))', strokeWidth: 0 }} activeDot={{ r: 6, fill: 'hsl(var(--primary))', stroke: 'hsl(var(--background))', strokeWidth: 2 }} />
               </LineChart>

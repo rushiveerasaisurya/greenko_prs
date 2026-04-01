@@ -12,9 +12,10 @@ export default function SiteManagement() {
   const [editingId, setEditingId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [detailSite, setDetailSite] = useState(null);
+  const [selectedHead, setSelectedHead] = useState(null);
   const [search, setSearch] = useState('');
 
-  const availableHeads = users.filter(u => u.role === 'SITE_HEAD' && u.status === 'Active');
+  const availableHeads = users.filter(u => (u.roles?.includes('SITE_HEAD') || u.role === 'SITE_HEAD') && u.status === 'Active');
 
   const openAdd = () => { setEditingId(null); setForm(emptyForm); setDrawerOpen(true); };
   const openEdit = (s) => { setEditingId(s.id); setForm({ name: s.name, type: s.type, cluster: s.cluster, siteHead: s.siteHead || '', state: s.state || '', capacity: String(s.capacity || ''), commissionedDate: s.commissionedDate || '', status: s.status }); setDrawerOpen(true); };
@@ -48,6 +49,10 @@ export default function SiteManagement() {
     (s.siteHead && s.siteHead.toLowerCase().includes(search.toLowerCase()))
   );
 
+  const sitesBySelectedHead = selectedHead 
+    ? sites.filter(s => s.siteHead === selectedHead)
+    : [];
+
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
       <div className="flex items-center justify-between">
@@ -74,7 +79,22 @@ export default function SiteManagement() {
                 <td className="px-4 py-3 font-medium">{s.name}</td>
                 <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.type === 'Solar' ? 'bg-warning/15 text-warning' : 'bg-info/15 text-info'}`}>{s.type}</span></td>
                 <td className="px-4 py-3 text-muted-foreground">{s.cluster}</td>
-                <td className="px-4 py-3">{s.siteHead || '—'}</td>
+                <td className="px-4 py-3">
+                  {s.siteHead ? (
+                    <button 
+                      onClick={() => setSelectedHead(s.siteHead)}
+                      className="text-primary hover:underline font-medium text-left transition-all"
+                      title="View all sites managed by this person"
+                    >
+                      {s.siteHead}
+                      {sites.filter(siteItem => siteItem.siteHead === s.siteHead).length > 1 && (
+                        <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-primary/10 text-[9px] font-bold">
+                          {sites.filter(siteItem => siteItem.siteHead === s.siteHead).length} Sites
+                        </span>
+                      )}
+                    </button>
+                  ) : '—'}
+                </td>
                 <td className="px-4 py-3 text-right text-score">{s.capacity}</td>
                 <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'Active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{s.status}</span></td>
                 <td className="px-4 py-3 text-center flex items-center justify-center gap-1">
@@ -99,11 +119,56 @@ export default function SiteManagement() {
             <div className="space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-muted-foreground">Type</span><span className="font-medium">{detailSite.type}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Cluster</span><span className="font-medium">{detailSite.cluster}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Site Head</span><span className="font-medium">{detailSite.siteHead || '—'}</span></div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Site Head</span>
+                <button 
+                  onClick={() => {
+                    const headName = detailSite.siteHead;
+                    setDetailSite(null);
+                    setSelectedHead(headName);
+                  }}
+                  className="font-medium text-primary hover:underline"
+                >
+                  {detailSite.siteHead || '—'}
+                </button>
+              </div>
               <div className="flex justify-between"><span className="text-muted-foreground">Capacity</span><span className="font-medium">{detailSite.capacity} MW</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">State</span><span className="font-medium">{detailSite.state || '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Commissioned</span><span className="font-medium">{detailSite.commissionedDate || '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Status</span><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${detailSite.status === 'Active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{detailSite.status}</span></div>
+            </div>
+          </div>
+        </motion.div>
+      </>)}
+
+      {/* Site Head's Multiple Sites Modal */}
+      {selectedHead && (<>
+        <div className="fixed inset-0 bg-foreground/30 z-40" onClick={() => setSelectedHead(null)} />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-xl border border-border shadow-2xl max-w-lg w-full overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-muted/30">
+              <div>
+                <h3 className="font-display font-bold text-lg">{selectedHead}</h3>
+                <p className="text-xs text-muted-foreground">Managed Sites ({sitesBySelectedHead.length})</p>
+              </div>
+              <button onClick={() => setSelectedHead(null)} className="p-1 rounded-full hover:bg-muted"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="max-h-[60vh] overflow-y-auto p-4 space-y-3">
+              {sitesBySelectedHead.map(s => (
+                <div key={s.id} className="flex items-center justify-between p-3 rounded-lg border border-border bg-background hover:border-primary/30 transition-colors">
+                  <div>
+                    <p className="font-bold text-sm">{s.name}</p>
+                    <p className="text-xs text-muted-foreground">{s.cluster} · {s.type}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-score">{s.capacity} MW</p>
+                    <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${s.status === 'Active' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{s.status}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 bg-muted/30 border-t border-border flex justify-end">
+              <button onClick={() => setSelectedHead(null)} className="px-4 py-2 bg-foreground text-background rounded-lg text-sm font-semibold hover:opacity-90">Close</button>
             </div>
           </div>
         </motion.div>

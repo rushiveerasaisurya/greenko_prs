@@ -78,7 +78,7 @@ export default function HODashboard() {
                     </td>
                     <td className="px-3 py-2 text-muted-foreground">{e.cluster}</td>
                     <td className="px-3 py-2 text-right text-score font-bold">{e.score}</td>
-                    <td className="px-3 py-2 text-center">{e.change > 0 ? <span className="text-success font-bold">↑ {e.change}</span> : e.change < 0 ? <span className="text-destructive font-bold">↓ {Math.abs(e.change)}</span> : <span className="text-muted-foreground">—</span>}</td>
+                    <td className="px-3 py-2 text-center">{e.change > 0 ? <span className="text-success font-bold">↑ {e.change.toFixed(2)}</span> : e.change < 0 ? <span className="text-destructive font-bold">↓ {Math.abs(e.change).toFixed(2)}</span> : <span className="text-muted-foreground">—</span>}</td>
                     <td className="px-3 py-2 text-center">
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${e.status === 'Fully Submitted' ? 'bg-success/15 text-success' : e.status === 'Partial' ? 'bg-warning/15 text-warning' : 'bg-muted text-muted-foreground'}`}>{e.status}</span>
                     </td>

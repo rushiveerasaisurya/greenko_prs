@@ -28,6 +28,25 @@ export default function EvidenceValidation() {
     (!filterMonth || s.month === filterMonth)
   );
 
+  // Helper: get the max marks allowed for this submission
+  const getMaxMarks = (sub) => {
+    const pEl = scoringElements.find(e => Number(e.number) === Number(sub.elementNumber));
+    if (!pEl) return 0;
+    // If submission has a subElement, match it to find max marks for that sub-element
+    if (sub.subElement) {
+      const se = pEl.subElements?.find(se => se.description === sub.subElement);
+      return se?.maxMarks || pEl.maxMarks || 0;
+    }
+    // Otherwise it's an element-level submission, use the element's total maxMarks
+    return pEl.maxMarks || 0;
+  };
+
+  // Helper: get sub-element display for a submission
+  const getSubElementDisplay = (sub) => {
+    if (sub.subElement) return sub.subElement;
+    return '—';
+  };
+
   const handleAction = (id, action) => {
     if (!remarks.trim()) { toast({ title: 'Remarks are required', variant: 'destructive' }); return; }
     updateSubmission(id, {
@@ -38,6 +57,13 @@ export default function EvidenceValidation() {
     });
     setReviewId(null); setMarks(''); setRemarks('');
     toast({ title: `Evidence ${action.toLowerCase()} ✓` });
+  };
+
+  const openReview = (sub) => {
+    const maxM = getMaxMarks(sub);
+    setReviewId(sub.id);
+    setMarks(maxM);
+    setRemarks('');
   };
 
   const review = submissions.find(s => s.id === reviewId);
@@ -61,67 +87,64 @@ export default function EvidenceValidation() {
               <span className="text-xs font-bold text-secondary">🏭 {s.site}</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${s.status === 'PENDING' ? 'bg-warning/15 text-warning' : s.status === 'APPROVED' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>{s.status}</span>
             </div>
-            <p className="text-xs text-muted-foreground">Element {s.elementNumber} › {s.subElement}</p>
-            <p className="text-sm font-medium mt-1">{s.element}</p>
-            <p className="text-xs text-muted-foreground mt-2">By: {s.submittedBy} · 📎 {s.filesCount} files</p>
+            <p className="text-sm font-medium">{s.element}</p>
+            {s.subElement && <p className="text-xs text-primary/80 mt-1 font-medium">↳ {s.subElement}</p>}
+            <p className="text-xs text-muted-foreground mt-2">By: {s.submittedBy} · 📎 {s.filesCount || 1} files</p>
             <div className="flex gap-2 mt-3">
-              <button onClick={() => { 
-                const pEl = scoringElements.find(e => Number(e.number) === Number(s.elementNumber));
-                const maxM = pEl?.subElements?.find(se => se.description === s.subElement)?.maxMarks || 0;
-                setReviewId(s.id); setMarks(maxM); setRemarks(''); 
-              }} className="flex-1 py-1.5 bg-info/10 text-info rounded-lg text-xs font-semibold flex items-center justify-center gap-1"><Eye className="w-3 h-3" /> Review</button>
+              <button onClick={() => openReview(s)} className="flex-1 py-1.5 bg-info/10 text-info rounded-lg text-xs font-semibold flex items-center justify-center gap-1"><Eye className="w-3 h-3" /> Review</button>
               {s.status === 'PENDING' && <>
-                <button onClick={() => { 
-                  const pEl = scoringElements.find(e => Number(e.number) === Number(s.elementNumber));
-                  const maxM = pEl?.subElements?.find(se => se.description === s.subElement)?.maxMarks || 0;
-                  setReviewId(s.id); setMarks(maxM); 
-                }} className="py-1.5 px-3 bg-success text-success-foreground rounded-lg text-xs font-semibold"><Check className="w-3 h-3" /></button>
-                <button onClick={() => { 
-                  const pEl = scoringElements.find(e => Number(e.number) === Number(s.elementNumber));
-                  const maxM = pEl?.subElements?.find(se => se.description === s.subElement)?.maxMarks || 0;
-                  setReviewId(s.id); setMarks(maxM); 
-                }} className="py-1.5 px-3 bg-destructive text-destructive-foreground rounded-lg text-xs font-semibold"><XIcon className="w-3 h-3" /></button>
+                <button onClick={() => openReview(s)} className="py-1.5 px-3 bg-success text-success-foreground rounded-lg text-xs font-semibold"><Check className="w-3 h-3" /></button>
+                <button onClick={() => openReview(s)} className="py-1.5 px-3 bg-destructive text-destructive-foreground rounded-lg text-xs font-semibold"><XIcon className="w-3 h-3" /></button>
               </>}
             </div>
           </div>
         ))}
       </div>
 
-      {review && (
-        <>
-          <div className="fixed inset-0 bg-foreground/30 z-40" onClick={() => setReviewId(null)} />
-          <div className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-card rounded-xl z-50 shadow-xl border border-border overflow-y-auto max-h-[90vh]">
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <h3 className="font-display font-bold">Review Submission</h3>
-              <button onClick={() => setReviewId(null)}><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-5 space-y-4">
-              <div className="text-sm"><span className="font-semibold">Site:</span> {review.site}</div>
-              <div className="text-sm"><span className="font-semibold">Element:</span> {review.element}</div>
-              <div className="text-sm"><span className="font-semibold">Sub-element:</span> {review.subElement}</div>
-              <div className="text-sm"><span className="font-semibold">Notes:</span> {review.notes}</div>
-              <div className="flex items-center gap-2 text-sm"><FileText className="w-4 h-4 text-info" /> {review.filesCount} files attached</div>
-              {review.status === 'PENDING' && (() => {
-                const pEl = scoringElements.find(e => Number(e.number) === Number(review.elementNumber));
-                const maxM = pEl?.subElements?.find(se => se.description === review.subElement)?.maxMarks || 0;
-                return (
+      {review && (() => {
+        const maxM = getMaxMarks(review);
+        const subElementDisplay = getSubElementDisplay(review);
+        const isNegativeElement = Number(review.elementNumber) === 9;
+        return (
+          <>
+            <div className="fixed inset-0 bg-foreground/30 z-40" onClick={() => setReviewId(null)} />
+            <div className="fixed inset-4 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-card rounded-xl z-50 shadow-xl border border-border overflow-y-auto max-h-[90vh]">
+              <div className="flex items-center justify-between p-5 border-b border-border">
+                <h3 className="font-display font-bold">Review Submission</h3>
+                <button onClick={() => setReviewId(null)}><X className="w-5 h-5" /></button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="text-sm"><span className="font-semibold">Site:</span> {review.site}</div>
+                <div className="text-sm"><span className="font-semibold">Element:</span> {review.element}</div>
+                <div className="text-sm"><span className="font-semibold">Sub-element:</span> {subElementDisplay}</div>
+                {review.notes && <div className="text-sm"><span className="font-semibold">Notes:</span> {review.notes}</div>}
+                <div className="flex items-center gap-2 text-sm"><FileText className="w-4 h-4 text-info" /> {review.filesCount || 1} files attached</div>
+                {review.status === 'PENDING' && (
                   <>
                     <div>
-                      <label className="text-xs font-semibold text-muted-foreground block mb-2">Marks to Award (Maximum allowed: {maxM})</label>
+                      <label className="text-xs font-semibold text-muted-foreground block mb-2">
+                        Marks to Award ({isNegativeElement ? `Deduction: ${maxM}` : `Maximum allowed: ${maxM}`})
+                      </label>
                       <input 
                         type="number" 
-                        max={maxM}
-                        min={0}
+                        max={isNegativeElement ? 0 : maxM}
+                        min={isNegativeElement ? maxM : 0}
                         step={0.5}
                         value={marks} 
                         onChange={e => {
                           let val = e.target.value;
-                          if (val !== '' && Number(val) > maxM) val = maxM;
-                          if (val !== '' && Number(val) < 0) val = 0;
+                          if (isNegativeElement) {
+                            // For negative elements, marks should be between maxM (e.g. -50) and 0
+                            if (val !== '' && Number(val) > 0) val = 0;
+                            if (val !== '' && Number(val) < maxM) val = maxM;
+                          } else {
+                            if (val !== '' && Number(val) > maxM) val = maxM;
+                            if (val !== '' && Number(val) < 0) val = 0;
+                          }
                           setMarks(val);
                         }} 
                         className="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm" 
-                        placeholder={`Max marks: ${maxM}`} 
+                        placeholder={isNegativeElement ? `Deduction marks: ${maxM}` : `Max marks: ${maxM}`} 
                       />
                     </div>
                     <div><label className="text-xs font-semibold text-muted-foreground">Remarks *</label><textarea value={remarks} onChange={e => setRemarks(e.target.value)} className="w-full mt-1 px-3 py-2 rounded-lg border border-input bg-background text-sm" rows={3} /></div>
@@ -130,13 +153,34 @@ export default function EvidenceValidation() {
                       <button onClick={() => handleAction(review.id, 'REJECTED')} className="flex-1 py-2.5 bg-destructive text-destructive-foreground rounded-lg font-semibold text-sm">Reject ✗</button>
                     </div>
                   </>
-                );
-              })()}
-              {review.status !== 'PENDING' && <div className="p-3 rounded-lg bg-muted text-sm"><span className="font-semibold">Status:</span> {review.status} {review.remarks && `— ${review.remarks}`}</div>}
+                )}
+                {review.status !== 'PENDING' && (
+                  <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">Status</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${review.status === 'APPROVED' ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>
+                        {review.status}
+                      </span>
+                    </div>
+                    {review.status === 'APPROVED' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Marks Awarded</span>
+                        <span className="text-sm font-bold text-primary">{review.marksAwarded}</span>
+                      </div>
+                    )}
+                    {review.remarks && (
+                      <div className="pt-2 border-t border-border/50">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">Remarks</p>
+                        <p className="text-xs text-foreground italic">"{review.remarks}"</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        );
+      })()}
     </motion.div>
   );
 }

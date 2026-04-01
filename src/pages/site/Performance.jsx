@@ -1,32 +1,44 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 
-import { RadialBarChart, RadialBar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { RadialBarChart, RadialBar, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PolarAngleAxis } from 'recharts';
 import { useData } from '@/contexts/DataContext';
 
 export default function SitePerformance() {
   const { user } = useAuth();
   const { months, getLeaderboard, submissions, scoringElements } = useData();
-  const currentLeaderboard = getLeaderboard(months[months.length - 1]);
+  const [selectedMonth, setSelectedMonth] = useState(months[months.length - 1]);
+  const currentLeaderboard = getLeaderboard(selectedMonth);
   const myEntry = currentLeaderboard.find(l => l.site === user?.site);
   const elements = (scoringElements || []).filter(e => e.active && e.number <= 8);
 
   const elementScores = elements.map(el => {
-    const subs = submissions.filter(s => s.site === user?.site && s.elementNumber === el.number && s.status === 'APPROVED').reduce((a, s) => a + (s.marksAwarded || 0), 0);
-    return { name: `E${el.number}`, awarded: subs, max: el.maxMarks, weight: el.weightage, pct: el.maxMarks > 0 ? Math.round((subs / el.maxMarks) * 100) : 0 };
+    const subs = submissions.filter(s => s.site === user?.site && s.elementNumber === el.number && s.status === 'APPROVED' && s.month === selectedMonth).reduce((a, s) => a + (s.marksAwarded || 0), 0);
+    return { name: `E${el.number}`, awarded: parseFloat(subs.toFixed(1)), max: el.maxMarks, weight: el.weightage, pct: el.maxMarks > 0 ? Math.round((subs / el.maxMarks) * 100) : 0 };
   });
 
   const gaugeData = [{ value: myEntry?.score || 0, fill: 'hsl(var(--primary))' }];
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      <h2 className="font-display text-xl font-bold">My Performance</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="font-display text-xl font-bold">My Performance</h2>
+        <select 
+          value={selectedMonth} 
+          onChange={e => setSelectedMonth(e.target.value)}
+          className="px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary transition-all"
+        >
+          {months.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="bg-card rounded-xl border border-border p-6 shadow-sm text-center">
           <h3 className="font-display font-bold mb-2">Overall Score</h3>
           <ResponsiveContainer width="100%" height={160}>
             <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={gaugeData} startAngle={180} endAngle={0}>
-              <RadialBar dataKey="value" cornerRadius={10} background />
+              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
+              <RadialBar dataKey="value" cornerRadius={10} background angleAxisId={0} />
             </RadialBarChart>
           </ResponsiveContainer>
           <p className="text-score text-4xl -mt-6">{myEntry?.score || 0}</p>

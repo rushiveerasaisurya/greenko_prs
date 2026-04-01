@@ -94,7 +94,6 @@ export default function Leaderboard() {
               className="px-3 py-2 bg-background border border-border rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="2025-26">FY 2025-26 (Current)</option>
-              <option value="2024-25">FY 2024-25 (Previous)</option>
             </select>
           </div>
         ) : (
@@ -186,7 +185,7 @@ export default function Leaderboard() {
                 </td>
               )}
               <td className={`px-4 py-3 text-right text-score font-bold ${scoreColor(e.score)}`}>{e.score}</td>
-              <td className="px-4 py-3 text-center">{e.change > 0 ? <span className="text-success font-semibold">↑{e.change}</span> : e.change < 0 ? <span className="text-destructive font-semibold">↓{Math.abs(e.change)}</span> : '—'}</td>
+              <td className="px-4 py-3 text-center">{e.change > 0 ? <span className="text-success font-semibold">↑{e.change.toFixed(2)}</span> : e.change < 0 ? <span className="text-destructive font-semibold">↓{Math.abs(e.change).toFixed(2)}</span> : '—'}</td>
               <td className="px-4 py-3 text-center"><span className={`px-2 py-0.5 rounded-full text-[10px] whitespace-nowrap font-bold ${e.status === 'Fully Submitted' || e.status === 'Excellent' ? 'bg-success/15 text-success' : e.status === 'Partial' || e.status === 'Good' ? 'bg-warning/15 text-warning' : 'bg-muted text-muted-foreground'}`}>{e.status}</span></td>
             </tr>
           ))}</tbody>
@@ -201,7 +200,10 @@ export default function Leaderboard() {
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis dataKey="name" tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }} />
               <YAxis domain={[0, 100]} tick={{ fontSize: 12, fill: 'hsl(var(--foreground))' }} />
-              <RechartsTooltip contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--card-foreground))' }} />
+              <RechartsTooltip 
+                contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--card-foreground))' }} 
+                formatter={(val) => [val?.toFixed(1), 'Score']}
+              />
               <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: 'hsl(var(--foreground))' }} />
               {topSites.map((item, index) => (
                 <Line

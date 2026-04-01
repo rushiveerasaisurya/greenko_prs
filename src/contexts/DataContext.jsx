@@ -32,7 +32,7 @@ function pseudoRandom(seed) {
 }
 
 export const months = [
-    'Oct 2024', 'Nov 2024', 'Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025',
+    'Apr 2025', 'May 2025', 'Jun 2025', 'Jul 2025', 'Aug 2025', 'Sep 2025', 
     'Oct 2025', 'Nov 2025', 'Dec 2025', 'Jan 2026', 'Feb 2026', 'Mar 2026'
 ];
 
@@ -95,12 +95,19 @@ export function DataProvider({ children }) {
             if (!user) return prev;
 
             // Sync with Sites if site assignment changes
-            if (updates.site !== undefined && updates.site !== user.site) {
-                if (user.site) {
-                    setSites(sPrev => sPrev.map(s => s.name === user.site ? { ...s, siteHead: '' } : s));
+            if (updates.sites || updates.site) {
+                const oldSites = user.sites || (user.site ? [user.site] : []);
+                const newSites = updates.sites || (updates.site ? [updates.site] : []);
+                
+                // Remove from old sites that are not in new sites
+                const removed = oldSites.filter(s => !newSites.includes(s));
+                if (removed.length > 0) {
+                    setSites(sPrev => sPrev.map(s => removed.includes(s.name) && s.siteHead === user.name ? { ...s, siteHead: '' } : s));
                 }
-                if (updates.site) {
-                    setSites(sPrev => sPrev.map(s => s.name === updates.site ? { ...s, siteHead: user.name } : s));
+                
+                // Add to new sites
+                if (newSites.length > 0) {
+                    setSites(sPrev => sPrev.map(s => newSites.includes(s.name) ? { ...s, siteHead: user.name } : s));
                 }
             }
 
@@ -137,8 +144,9 @@ export function DataProvider({ children }) {
                 });
             } else if (user) {
                 // Restore site head assignments
-                if (user.site) {
-                    setSites(sPrev => sPrev.map(s => s.name === user.site ? { ...s, siteHead: user.name } : s));
+                const userSites = user.sites || (user.site ? [user.site] : []);
+                if (userSites.length > 0) {
+                    setSites(sPrev => sPrev.map(s => userSites.includes(s.name) ? { ...s, siteHead: user.name } : s));
                 }
                 // Restore cluster head assignments
                 if (user.cluster) {
@@ -395,9 +403,7 @@ export function DataProvider({ children }) {
     }, [sites, months, getSiteScoreDetails]);
 
     const getFYLeaderboard = useCallback((year = '2025-26') => {
-        const fyMonths = year === '2025-26'
-            ? months.slice(6)
-            : months.slice(0, 6);
+        const fyMonths = months; 
 
         const activeSites = sites.filter(s => s.status === 'Active');
         if (activeSites.length === 0) return [];

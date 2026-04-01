@@ -10,6 +10,7 @@ export default function IncidentReporting() {
     const { sites, submissions, addSubmission, scoringElements, months } = useData();
     const [site, setSite] = useState('');
     const [month, setMonth] = useState(months ? months[months.length - 1] : 'Mar 2026');
+    const [viewMonth, setViewMonth] = useState('All');
     const [typeId, setTypeId] = useState('');
     const [description, setDescription] = useState('');
 
@@ -48,6 +49,7 @@ export default function IncidentReporting() {
 
     const myIncidents = submissions.filter(s => {
         if (s.elementNumber !== 9) return false;
+        if (viewMonth !== 'All' && s.month !== viewMonth) return false;
         if (activeRole === 'HEAD_OFFICE') return true;
         // For cluster heads and safety officers, show only incidents from their cluster
         const siteData = sites.find(siteItem => siteItem.name === s.site);
@@ -93,9 +95,27 @@ export default function IncidentReporting() {
                 </div>
 
                 <div className="md:col-span-2 space-y-4">
-                    <h3 className="font-semibold text-sm">Recent Logged Incidents</h3>
+                    <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-sm">Recent Logged Incidents</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">Filter by Month:</span>
+                            <select 
+                                value={viewMonth} 
+                                onChange={e => setViewMonth(e.target.value)} 
+                                className="px-3 py-1 rounded-lg border border-input bg-background text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-destructive/30"
+                            >
+                                <option value="All">All Months</option>
+                                {months?.map(m => <option key={m} value={m}>{m}</option>)}
+                            </select>
+                        </div>
+                    </div>
                     {myIncidents.length === 0 ? (
-                        <div className="p-8 border border-dashed border-border rounded-xl text-center text-muted-foreground text-sm">No incidents logged yet. Great job!</div>
+                        <div className="p-12 border border-dashed border-border rounded-xl text-center text-muted-foreground text-sm flex flex-col items-center gap-2">
+                            <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-muted-foreground/50">
+                                <AlertTriangle className="w-6 h-6" />
+                            </div>
+                            <p>No incidents found for the selected period.</p>
+                        </div>
                     ) : (
                         <div className="space-y-3">
                             {myIncidents.map(inc => (
