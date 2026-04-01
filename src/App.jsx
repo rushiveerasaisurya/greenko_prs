@@ -52,7 +52,7 @@ function RoleRedirect() {
 
 const App = () => {
   // One-time cache clear for authentications fixes
-  const CACHE_VERSION = 'v1.3';
+  const CACHE_VERSION = 'v1.4';
   if (localStorage.getItem('ssrs_cache_version') !== CACHE_VERSION) {
     localStorage.removeItem('sp_users');
     localStorage.removeItem('sp_sites');
