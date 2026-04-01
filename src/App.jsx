@@ -52,14 +52,22 @@ function RoleRedirect() {
 
 const App = () => {
   // One-time cache clear for authentications fixes
-  const CACHE_VERSION = 'v1.4';
+  const CACHE_VERSION = 'v2.0';
   if (localStorage.getItem('ssrs_cache_version') !== CACHE_VERSION) {
+    // Clear both old v1 and current v2 keys
     localStorage.removeItem('sp_users');
     localStorage.removeItem('sp_sites');
     localStorage.removeItem('sp_clusters');
     localStorage.removeItem('sp_submissions');
     localStorage.removeItem('sp_tickets');
     localStorage.removeItem('sp_notifications');
+    localStorage.removeItem('sp_users_v2');
+    localStorage.removeItem('sp_sites_v2');
+    localStorage.removeItem('sp_clusters_v2');
+    localStorage.removeItem('sp_submissions_v2');
+    localStorage.removeItem('sp_tickets_v2');
+    localStorage.removeItem('sp_notifications_v2');
+    localStorage.removeItem('sp_scoring_v2');
     sessionStorage.removeItem('ssrs_user');
     localStorage.setItem('ssrs_cache_version', CACHE_VERSION);
     window.location.reload();
