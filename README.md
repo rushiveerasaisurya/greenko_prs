@@ -1,36 +1,34 @@
-# Greenko Plant Ranking System — Safety Scoring & Reporting System
+# 🌿 Greenko Plant Ranking System (PRS)
+### **Institutionalizing Safety & Operational Excellence**
 
-A role-based safety management dashboard built with **React**, **Vite**, **Tailwind CSS**, and **shadcn/ui**.
+The **Greenko Plant Ranking System (PRS)** is a premium, role-based dashboard designed to digitize safety governance across renewable assets. It streamlines safety framework tracking to ensure transparency, real-time accountability, and a proactive safety culture.
 
-## Features
+---
 
-- **Head Office** — site/cluster/user management, scoring configuration, quarter management, reports
-- **Cluster Head** — evidence validation, quiz builder, audit reports
-- **Site Head** — evidence submission, quizzes, performance tracking
-- **Shared** — leaderboard, tickets, notifications
+## 👥 Role Capabilities
 
-## Getting Started
+*   **🏢 Head Office (HO)**: Global oversight, scoring configuration, master data management, and incident reporting.
+*   **🛡️ Cluster Head**: Evidence validation engine, localized audit reporting, and cluster-level performance tracking.
+*   **📍 Site Head**: Digital evidence submission with sub-element granularity and real-time ranking visibility.
 
-```sh
+---
+
+## 🛠 Tech & Persistence
+*   **Stack**: React 18, Vite, Tailwind CSS, Framer Motion.
+*   **Persistence**: `localStorage` (v2) with automated `CACHE_VERSION` management for seamless updates.
+*   **Precision**: Fine-grained sub-element validation for accurate safety scoring.
+
+---
+
+## 🏁 Quick Start
+
+```bash
 # Install dependencies
 npm install
 
-# Start the development server
+# Start development
 npm run dev
 
-# Build for production
+# Build for Vercel
 npm run build
-
-# Run tests
-npm test
 ```
-
-## Tech Stack
-
-- React 18
-- Vite 5
-- Tailwind CSS 3
-- shadcn/ui (Radix UI primitives)
-- React Router v6
-- Recharts
-- Framer Motion
